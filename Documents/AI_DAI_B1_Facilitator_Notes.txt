@@ -1,0 +1,176 @@
+AI DAI – B1 Facilitator Notes
+
+====================================================
+1. AI MINDSET & PHILOSOPHY
+====================================================
+
+The focus is not traditional software engineering alone, but the intentional use of AI tools to achieve a specific and constrained outcome.
+
+Key philosophy:
+- Use AI intentionally.
+- Avoid generic AI-generated defaults.
+- Guide the AI toward meaningful outcomes.
+- Maintain explainable and maintainable code.
+
+----------------------------------------------------
+A. Vibe Coding and Intentionality
+----------------------------------------------------
+
+Vibe coding refers to:
+- Working collaboratively with AI systems
+- Using prompts, iteration, and direction
+- Steering the AI toward desired outcomes
+- Reducing the need for deep manual coding
+
+Important principle:
+The facilitator should not blindly accept AI-generated output.
+Instead:
+- Refine prompts
+- Adjust constraints
+- Clarify intent
+- Iterate intentionally
+
+The goal is:
+- Human-guided AI development
+rather than
+- Fully autonomous AI generation
+
+----------------------------------------------------
+B. Documenting the Mental Model
+----------------------------------------------------
+
+The README should document:
+- Prompts used
+- Iterations attempted
+- Why changes were made
+- How the AI was guided
+- Tradeoffs and decisions
+
+This demonstrates:
+- Intentional AI usage
+- Problem-solving process
+- Explainability
+- Technical reasoning
+
+The documentation should show:
+“How the human steered the AI.”
+
+----------------------------------------------------
+C. Creativity as a Benchmark
+----------------------------------------------------
+
+Projects should:
+- Be memorable
+- Show creativity
+- Avoid generic “template-style” implementations
+
+The implementation should:
+- Stand out visually or functionally
+- Demonstrate thoughtful interaction design
+- Show meaningful AI integration
+
+The assessment values:
+- Originality
+- Intentional design
+- Creative problem solving
+
+====================================================
+2. FEATURE DEVELOPMENT FRAMEWORK
+====================================================
+
+For each feature, define:
+
+----------------------------------------------------
+A. Rules
+----------------------------------------------------
+
+What the feature:
+- Should do
+- Should not do
+- Must enforce
+- Must avoid
+
+Examples:
+- Permissions
+- Data limitations
+- Safety boundaries
+- User constraints
+
+----------------------------------------------------
+B. Implementation
+----------------------------------------------------
+
+Define:
+- What must be achieved
+- Which AI tools are used
+- Which technologies are used
+- Expected outputs
+
+Examples:
+- Mock API
+- Mock database
+- AI chatbot
+- Dashboard UI
+- AI-generated assets
+
+----------------------------------------------------
+C. Larger Context
+----------------------------------------------------
+
+Demonstrate:
+- Why AI was used
+- What value AI adds
+- How maintainability is preserved
+- How accessibility is preserved
+
+The project should show:
+- AI-assisted workflows
+- Explainable architecture
+- Sustainable implementation
+
+====================================================
+3. FACILITATOR ROLE
+====================================================
+
+The facilitator exists to assist non-technical SMEs.
+
+Key responsibilities:
+- Guide trainees
+- Simplify AI concepts
+- Keep solutions accessible
+- Keep implementations explainable
+- Help with prompting
+- Help with decision-making
+
+Important:
+The facilitator should NOT:
+- Build everything for trainees
+- Hide implementation details
+- Overcomplicate the solution
+
+The facilitator SHOULD:
+- Teach intentional prompting
+- Help structure ideas
+- Encourage experimentation
+- Explain AI outputs clearly
+
+====================================================
+4. MAINTAINABILITY & ACCESSIBILITY
+====================================================
+
+Projects should remain:
+- Maintainable
+- Readable
+- Explainable
+- Accessible to non-technical stakeholders
+
+Even when using AI:
+- Code quality matters
+- Architecture matters
+- Documentation matters
+
+The project should not become:
+- Unstructured AI-generated code
+- Unmaintainable prototype chaos
+
+

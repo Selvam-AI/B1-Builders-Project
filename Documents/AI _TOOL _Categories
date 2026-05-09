@@ -1,0 +1,399 @@
+AI DAI – B1 Facilitator Notes
+
+====================================================
+5. AI TOOL CATEGORIES
+====================================================
+
+----------------------------------------------------
+A. Chat-Based Assistance
+----------------------------------------------------
+
+Purpose:
+- Interactive conversational assistance
+- Human stays in control
+- AI responds to instructions and questions
+
+Characteristics:
+- Prompt-response workflow
+- User manually directs the conversation
+- Good for brainstorming and guided development
+
+Examples:
+- ChatGPT
+- Gemini App
+- Claude Chat
+
+----------------------------------------------------
+B. Agent-Based Systems
+----------------------------------------------------
+
+Purpose:
+- AI performs longer workflows autonomously
+- Multiple steps may be executed automatically
+- AI can coordinate tasks and tools
+
+Characteristics:
+- Goal-oriented workflows
+- Semi-autonomous execution
+- Multi-agent collaboration possible
+
+Examples:
+- CrewAI
+- Microsoft AutoGen
+- OpenDevin
+- Vertex AI Agent Builder
+
+----------------------------------------------------
+C. AI Coding Assistants
+----------------------------------------------------
+
+Purpose:
+- Assist software development directly
+- Generate or refactor code
+- Improve coding productivity
+
+Examples:
+- Copilot (Specialized developer workflow tool)
+- Codex (similar to Copilot)
+- Aider (similar to Copilot)
+
+Comparison:
+- CHATGPT is a General AI assistant
+- ChatGPT can generate code
+- But Copilot is purpose-built to assist coding continuously inside the IDE
+
+----------------------------------------------------
+D. Enterprise AI Platforms
+----------------------------------------------------
+
+Purpose:
+- Build enterprise AI systems
+- Integrate with enterprise ecosystems
+- Deploy scalable AI workflows
+
+Examples:
+- Vertex AI
+- Microsoft AI ecosystem
+
+====================================================
+6. CHAT-BASED VS AGENT-BASED SYSTEMS
+====================================================
+
+----------------------------------------------------
+A. Chat-Based Assistance
+----------------------------------------------------
+
+The user:
+- Gives prompts
+- Reviews responses
+- Decides next steps manually
+
+The AI:
+- Responds conversationally
+- Does not independently orchestrate workflows
+
+Strengths:
+- Easy for beginners
+- Highly explainable
+- Good for SMEs
+- Human remains fully in control
+
+Limitations:
+- Requires constant user direction
+- Less automation
+
+----------------------------------------------------
+B. Agent-Based Systems
+----------------------------------------------------
+
+The user:
+- Defines goals
+- Defines constraints
+- Delegates workflows
+
+The AI system:
+- Plans tasks
+- Executes steps
+- Coordinates tools or agents
+
+Strengths:
+- Higher automation
+- Multi-step execution
+- More scalable workflows
+
+Limitations:
+- More complexity
+- Harder to explain
+- Requires stronger guardrails
+
+====================================================
+7. EXTERNAL VS NATIVE ORCHESTRATION
+====================================================
+
+----------------------------------------------------
+A. External Orchestration
+(OpenAI / Copilot Stack)
+----------------------------------------------------
+
+Definition:
+AI orchestration built using external frameworks and APIs.
+
+Typical stack:
+- ChatGPT
+- Codex
+- GitHub Copilot
+- CrewAI
+- AutoGen
+- VS Code integrations
+
+Characteristics:
+- Flexible
+- Tool-agnostic
+- Mix-and-match ecosystem
+
+Typical workflow:
+- External LLM APIs
+- Third-party orchestration
+- Custom integrations
+
+Strength:
+High flexibility and experimentation.
+
+Weakness:
+Requires more integration effort.
+
+----------------------------------------------------
+B. Native Orchestration
+(Gemini / Vertex AI Stack)
+----------------------------------------------------
+
+Definition:
+AI orchestration built directly inside a unified ecosystem.
+
+Typical stack:
+- Gemini
+- Gemini Gems
+- Vertex AI
+- Google Cloud integrations
+
+Characteristics:
+- Tightly integrated
+- Unified platform
+- Native orchestration tools
+
+Typical workflow:
+- Google-managed AI stack
+- Built-in orchestration and deployment
+- Enterprise integration
+
+Strength:
+Simpler enterprise deployment.
+
+Weakness:
+More ecosystem dependency.
+
+====================================================
+8. TOOL EXPLANATIONS
+====================================================
+
+----------------------------------------------------
+A. VS Code + Copilot
+----------------------------------------------------
+
+Category:
+AI Coding Assistant
+
+Purpose:
+- AI-assisted development inside VS Code
+- Autocomplete code
+- Generate snippets
+- Assist debugging
+
+Strength:
+Low friction developer assistance.
+
+----------------------------------------------------
+B. Codex
+----------------------------------------------------
+
+Category:
+AI Coding Model
+
+Purpose:
+- Generate and understand code
+- Translate natural language into software logic
+- Assist implementation workflows
+
+Strength:
+Strong natural language to code capability.
+
+----------------------------------------------------
+C. Gemini App
+----------------------------------------------------
+
+Category:
+Chat-Based AI Assistant
+
+Provider:
+Google
+
+Purpose:
+- Conversational AI interaction
+- Brainstorming
+- Prompt experimentation
+- General AI assistance
+
+Strength:
+Accessible conversational workflow.
+
+----------------------------------------------------
+D. Gemini Gems
+----------------------------------------------------
+
+Category:
+Custom AI Assistants
+
+Provider:
+Google
+
+Purpose:
+- Create specialized AI assistants
+- Configure custom instructions
+- Build reusable workflows
+
+Typical use:
+- SME-focused assistants
+- Domain-specific workflows
+- Reusable AI guidance systems
+
+Strength:
+Personalized AI behavior.
+
+----------------------------------------------------
+E. Vertex AI Agent Builder
+----------------------------------------------------
+
+Category:
+Enterprise AI Platform
+
+Provider:
+Google Cloud
+
+Purpose:
+- Build AI agents
+- Build enterprise AI assistants
+- Integrate with enterprise data sources
+- Connect with cloud services
+
+Typical use:
+- Customer support assistant
+- Internal enterprise search
+- Workflow automation
+- AI business dashboards
+
+Strength:
+Enterprise integration and scalability.
+
+----------------------------------------------------
+F. CrewAI
+----------------------------------------------------
+
+Category:
+Multi-Agent AI Framework
+
+Purpose:
+- Coordinate multiple AI agents
+- Assign roles to agents
+- Allow agents to collaborate
+
+Example:
+- One agent researches
+- One agent writes
+- One agent validates
+
+Strength:
+Structured multi-agent collaboration.
+
+----------------------------------------------------
+G. Microsoft AutoGen
+----------------------------------------------------
+
+Category:
+Multi-Agent AI Framework
+
+Provider:
+Microsoft
+
+Purpose:
+- Create conversational AI agent systems
+- Allow agents to communicate
+- Build autonomous workflows
+
+Typical use:
+- AI orchestration
+- AI collaboration systems
+- Complex AI task automation
+
+Strength:
+Advanced agent communication workflows.
+
+----------------------------------------------------
+H. Aider
+----------------------------------------------------
+
+Category:
+AI Coding Assistant
+
+Purpose:
+- AI-assisted software development
+- Edit code using prompts
+- Work directly with local repositories
+
+Typical use:
+- Refactoring
+- Bug fixing
+- Feature implementation
+
+Strength:
+Strong developer-AI collaboration workflow.
+
+----------------------------------------------------
+I. OpenDevin
+----------------------------------------------------
+
+Category:
+Autonomous AI Developer
+
+Purpose:
+- Simulate an AI software engineer
+- Perform coding tasks autonomously
+- Execute development workflows
+
+Typical use:
+- Autonomous coding experiments
+- AI engineering workflows
+- AI task automation
+
+Strength:
+High autonomy experimentation.
+
+====================================================
+9. OVERALL TRAINING PHILOSOPHY
+====================================================
+
+The objective is not:
+- To replace developers entirely
+
+The objective is:
+- To empower non-technical professionals
+- To enable AI-assisted creation
+- To guide intentional AI usage
+- To produce valuable business solutions quickly
+
+The focus is:
+- Prompting
+- Decision-making
+- Human-AI collaboration
+- Explainability
+- Creativity
+- Accessibility
