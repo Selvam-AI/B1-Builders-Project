@@ -1,0 +1,18 @@
+# Local environment and runtime files
+.env
+project 1/.env
+project 1/data/*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/

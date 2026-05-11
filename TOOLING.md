@@ -1,0 +1,27 @@
+# Project Tooling
+
+This file records local tools and editor extensions used for the Geopolitical Market Forecaster project.
+
+## System Tools
+
+- `python3.12-venv`: creates isolated Python virtual environments for the backend.
+- `python3-pip`: installs Python dependencies from `requirements.txt` or `pyproject.toml`.
+
+## VS Code Extensions
+
+- Python by Microsoft: Python language support, interpreter selection, debugging, and test integration.
+- Pylance: faster Python IntelliSense, type checking, and code navigation.
+- Ruff: linting and formatting support for Python code quality.
+- SQLite Viewer: inspect local SQLite database files created by the prototype.
+
+## Optional VS Code Extensions
+
+- GitLens: richer Git history and blame views. Optional because built-in VS Code Git is enough for this project.
+- REST Client: quick API endpoint testing from `.http` files. Optional because `curl`, browser docs, or Thunder Client can cover the same need.
+- Thunder Client: GUI API testing inside VS Code. Optional alternative to REST Client.
+- Prettier: frontend formatting once the React/Vite dashboard is added.
+- ESLint: frontend linting once JavaScript or TypeScript dashboard code is added.
+
+## Not Added Yet
+
+- CrewAI: deferred until after the first vertical slice. The current plan uses plain Python service classes first, then evaluates whether an orchestration framework adds value.
