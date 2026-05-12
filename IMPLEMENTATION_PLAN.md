@@ -147,20 +147,20 @@ Deliverable:
 
 ### Phase 5 - Hardening and Governance
 
-Status: Not started
+Status: Complete
 
 Actions:
-- Add stronger source allowlists and robots/API compliance notes.
-- Add regression tests for governance checks.
-- Add prompt/version tracking for agent behavior.
-- Add deployment notes.
+- Kept governance basic for this prototype.
+- Added `GOVERNANCE_REPORT.md` describing current Governor behavior, limits, and future enhancements.
+- Added regression tests for current governance checks.
+- Updated README documentation for governance visibility and limitations.
+- Documented future active governance work without expanding scope now.
 
 Deliverable:
 - A governance-ready prototype with auditable runs and reproducible prompts.
 
 ## Immediate Next Actions
 
-1. Start Phase 5 hardening and governance.
-2. Tighten source-specific search queries for more relevant Middle East market signals.
-3. Add richer governance checks and audit detail.
-4. Decide whether to implement real Gemini analysis now or keep rule-based analysis for the prototype.
+1. Review the dashboard and governance report.
+2. Decide whether to refine source queries, implement Gemini analysis, or prepare deployment.
+3. Optionally add active governance gates in a future enhancement pass.

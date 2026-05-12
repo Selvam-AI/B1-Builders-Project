@@ -142,6 +142,14 @@ View database table counts:
 gmf show-status
 ```
 
+## Governance
+
+The Governor Agent is currently a basic post-forecast review layer. It checks whether forecasts include evidence, flags high-confidence forecasts for manual review, preserves uncertainty notes, and keeps source URLs attached for traceability.
+
+Governance output is visible in the dashboard Governance column and persisted in SQLite tables such as `governance_reviews` and `audit_events`. It does not yet prevent the Analyst Agent from using weak or unverified source material before analysis. Future governance work can add active source-quality gates and richer dashboard explanations.
+
+See the root `GOVERNANCE_REPORT.md` for the readable governance report.
+
 ## Test
 
 ```bash
@@ -165,7 +173,7 @@ pytest
 Expected result:
 
 ```text
-4 passed
+17 passed
 ```
 
 The placeholder agent pipeline returns one governed forecast:
