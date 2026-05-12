@@ -121,3 +121,39 @@ move to Next Phase 2 - Agent Pipeline.
 Minimal action summary:
 
 Completed Phase 2 by making the pipeline read stored news, persist latest agent outputs per news URL, record audit handoffs, add table-count visibility, and cover the workflow with offline tests.
+
+### 2026-05-12 - Build Phase 3 Dashboard
+
+Prompt:
+
+```text
+Decisions for Phase 3 - Dashboard stack - FASTAPI ... , agreed with Dashboard scope and visual style recommendation.  Procced with Phase 3.
+```
+
+Minimal action summary:
+
+Built the FastAPI/Jinja2 dashboard, added dashboard JSON data, created operational styling, updated docs and plan, and verified routes/data with tests.
+
+### 2026-05-12 - Dashboard Access From VM
+
+Prompt:
+
+```text
+I am unable to connect to http://127.0.0.1:8000/dashboard on browser. Need I tell you we are inside a virutal machine (vmm).
+```
+
+Minimal action summary:
+
+Identified that the previous server was started inside the Codex sandbox network and switched to running Uvicorn outside the sandbox for browser access from the VM environment.
+
+### 2026-05-12 - Implement Phase 4 Realtime Alerts
+
+Prompt:
+
+```text
+implement phase 4
+```
+
+Minimal action summary:
+
+Implemented optional background polling, WebSocket dashboard updates, manual refresh API, alert severity rules, frontend realtime refresh behavior, configuration settings, and tests.

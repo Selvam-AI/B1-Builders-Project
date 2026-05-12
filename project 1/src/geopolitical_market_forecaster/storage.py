@@ -290,3 +290,79 @@ def count_rows(database_url: str, table_name: str) -> int:
 
     with sqlite3.connect(database_path(database_url)) as connection:
         return int(connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0])
+
+
+def list_dashboard_signals(database_url: str, limit: int = 25) -> list[dict[str, object]]:
+    initialize_database(database_url)
+    with sqlite3.connect(database_path(database_url)) as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            """
+            SELECT
+                n.title,
+                n.source,
+                n.url,
+                n.published_at,
+                n.region,
+                n.summary,
+                i.signal_tier,
+                i.themes,
+                i.affected_markets,
+                i.rationale,
+                f.forecast,
+                f.time_horizon,
+                f.confidence,
+                f.uncertainty,
+                g.approved,
+                g.flags,
+                g.audit_notes
+            FROM news_items n
+            LEFT JOIN economic_insights i ON i.news_url = n.url
+            LEFT JOIN market_forecasts f ON f.news_url = n.url
+            LEFT JOIN governance_reviews g ON g.news_url = n.url
+            ORDER BY COALESCE(n.published_at, n.collected_at) DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+    signals: list[dict[str, object]] = []
+    for row in rows:
+        signals.append(
+            {
+                "title": row["title"],
+                "source": row["source"],
+                "url": row["url"],
+                "published_at": row["published_at"],
+                "region": row["region"],
+                "summary": row["summary"],
+                "signal_tier": row["signal_tier"] or "Pending",
+                "themes": split_csv(row["themes"]),
+                "affected_markets": split_csv(row["affected_markets"]),
+                "rationale": row["rationale"],
+                "forecast": row["forecast"] or "Pending pipeline run",
+                "time_horizon": row["time_horizon"] or "Pending",
+                "confidence": row["confidence"] or "Pending",
+                "uncertainty": row["uncertainty"],
+                "approved": bool(row["approved"]) if row["approved"] is not None else None,
+                "flags": split_csv(row["flags"]),
+                "audit_notes": split_csv(row["audit_notes"]),
+            }
+        )
+    return signals
+
+
+def dashboard_summary(database_url: str) -> dict[str, int]:
+    return {
+        "news_items": count_rows(database_url, "news_items"),
+        "economic_insights": count_rows(database_url, "economic_insights"),
+        "market_forecasts": count_rows(database_url, "market_forecasts"),
+        "governance_reviews": count_rows(database_url, "governance_reviews"),
+        "audit_events": count_rows(database_url, "audit_events"),
+    }
+
+
+def split_csv(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]

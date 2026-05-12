@@ -24,6 +24,8 @@ class Settings(BaseModel):
     analysis_provider: str = "rule_based"
     gemini_model: str = "gemini-1.5-flash"
     error_log_path: str = str(REPO_ROOT / "ERROR_LOG.txt")
+    enable_background_polling: bool = False
+    alert_poll_seconds: int = 300
 
 
 @lru_cache
@@ -47,4 +49,10 @@ def get_settings() -> Settings:
         analysis_provider=os.getenv("ANALYSIS_PROVIDER", "rule_based"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
         error_log_path=os.getenv("ERROR_LOG_PATH", str(REPO_ROOT / "ERROR_LOG.txt")),
+        enable_background_polling=os.getenv(
+            "ENABLE_BACKGROUND_POLLING",
+            "false",
+        ).lower()
+        in {"1", "true", "yes", "on"},
+        alert_poll_seconds=int(os.getenv("ALERT_POLL_SECONDS", "300")),
     )

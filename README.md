@@ -14,4 +14,4 @@ See `project 1/README.md` for local setup and run commands.
 
 ## Current Phase
 
-Phases 0, 1, and 2 are complete. The next implementation phase is Phase 3: a dashboard for reviewing latest news, insights, forecasts, confidence, and governance state.
+Phases 0 through 4 are complete. The next implementation phase is Phase 5: hardening, governance, stronger audit detail, and deployment readiness.

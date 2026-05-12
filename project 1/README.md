@@ -49,6 +49,8 @@ GUARDIAN_API_KEY=your_key_here
 CURRENTS_API_KEY=your_key_here
 ANALYSIS_PROVIDER=rule_based
 GEMINI_MODEL=gemini-1.5-flash
+ENABLE_BACKGROUND_POLLING=false
+ALERT_POLL_SECONDS=300
 ```
 
 Analysis providers:
@@ -62,11 +64,39 @@ Analysis providers:
 uvicorn geopolitical_market_forecaster.main:app --reload
 ```
 
+FastAPI is the backend application framework. Uvicorn is the server process that runs the FastAPI app locally and listens for browser/API requests.
+
 Health check:
 
 ```bash
 curl http://127.0.0.1:8000/health
 ```
+
+Dashboard:
+
+```text
+http://127.0.0.1:8000/dashboard
+```
+
+Dashboard JSON:
+
+```text
+http://127.0.0.1:8000/api/dashboard
+```
+
+Realtime WebSocket:
+
+```text
+ws://127.0.0.1:8000/ws/alerts
+```
+
+Manual refresh endpoint:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/ingest/run?source=guardian"
+```
+
+Background polling is disabled by default to avoid unwanted API usage. Set `ENABLE_BACKGROUND_POLLING=true` to let the server periodically ingest, run the pipeline, and broadcast dashboard updates every `ALERT_POLL_SECONDS`.
 
 Run the placeholder pipeline:
 

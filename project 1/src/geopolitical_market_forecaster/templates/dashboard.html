@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geopolitical Market Forecaster</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Geopolitical Market Forecaster</p>
+        <h1>Market Signal Dashboard</h1>
+      </div>
+      <div class="status-panel">
+        <div class="provider">Analysis: {{ analysis_provider }}</div>
+        <div id="connection-status" class="connection-status">Realtime: connecting</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="metrics" aria-label="Pipeline counts">
+        <div class="metric">
+          <span>News</span>
+          <strong data-count="news_items">{{ summary.news_items }}</strong>
+        </div>
+        <div class="metric">
+          <span>Insights</span>
+          <strong data-count="economic_insights">{{ summary.economic_insights }}</strong>
+        </div>
+        <div class="metric">
+          <span>Forecasts</span>
+          <strong data-count="market_forecasts">{{ summary.market_forecasts }}</strong>
+        </div>
+        <div class="metric">
+          <span>Reviews</span>
+          <strong data-count="governance_reviews">{{ summary.governance_reviews }}</strong>
+        </div>
+        <div class="metric">
+          <span>Audit Events</span>
+          <strong data-count="audit_events">{{ summary.audit_events }}</strong>
+        </div>
+      </section>
+
+      <section class="alerts" aria-label="Realtime alerts">
+        <div class="section-heading">
+          <h2>Realtime Alerts</h2>
+          <span id="alert-count">0 active</span>
+        </div>
+        <div id="alert-list" class="alert-list">
+          <div class="empty-alert">No medium or high severity alerts.</div>
+        </div>
+      </section>
+
+      <section class="signals" aria-label="Market signals">
+        <div class="section-heading">
+          <h2>Latest Signals</h2>
+          <span id="signal-count">{{ signals|length }} shown</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Signal</th>
+                <th>Tier</th>
+                <th>Markets</th>
+                <th>Forecast</th>
+                <th>Confidence</th>
+                <th>Governance</th>
+              </tr>
+            </thead>
+            <tbody id="signals-body">
+              {% for signal in signals %}
+              <tr>
+                <td class="signal-title">
+                  <a href="{{ signal.url }}" target="_blank" rel="noreferrer">{{ signal.title }}</a>
+                  <span>{{ signal.source }}{% if signal.published_at %} · {{ signal.published_at[:10] }}{% endif %}</span>
+                  {% if signal.summary %}<p>{{ signal.summary }}</p>{% endif %}
+                </td>
+                <td><span class="pill tier-{{ signal.signal_tier|lower }}">{{ signal.signal_tier }}</span></td>
+                <td>
+                  <div class="tags">
+                    {% for market in signal.affected_markets %}
+                      <span>{{ market }}</span>
+                    {% endfor %}
+                  </div>
+                </td>
+                <td class="forecast">
+                  {{ signal.forecast }}
+                  <span>{{ signal.time_horizon }}</span>
+                </td>
+                <td><span class="pill confidence">{{ signal.confidence }}</span></td>
+                <td>
+                  {% if signal.approved is none %}
+                    <span class="pill pending">Pending</span>
+                  {% elif signal.approved %}
+                    <span class="pill approved">Approved</span>
+                  {% else %}
+                    <span class="pill flagged">Flagged</span>
+                  {% endif %}
+                  {% if signal.flags %}
+                    <small>{{ signal.flags|join(", ") }}</small>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="empty">No signals yet. Run ingestion and the pipeline to populate the dashboard.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', path='dashboard.js') }}"></script>
+  </body>
+</html>

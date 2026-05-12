@@ -119,24 +119,28 @@ Deliverable:
 
 ### Phase 3 - Dashboard
 
-Status: Not started
+Status: Complete
 
 Actions:
-- Build a dashboard showing latest news, signal tier, market implications, forecasts, confidence, and audit state.
-- Add filters by region, sector, source, confidence, and time horizon.
-- Include source links and reasoning traces.
+- Built FastAPI/Jinja2 dashboard at `/dashboard`.
+- Added dashboard JSON endpoint at `/api/dashboard`.
+- Dashboard shows latest news, signal tier, affected markets, forecasts, confidence, approval state, counts, and source links.
+- Included source links and operational counts.
+- Initial version is server-rendered; richer filters can be added in Phase 4 or a future dashboard enhancement pass.
 
 Deliverable:
 - A local dashboard usable for reviewing geopolitical market signals.
 
 ### Phase 4 - Realtime Alerts
 
-Status: Not started
+Status: Complete
 
 Actions:
-- Add background polling.
-- Add WebSocket updates.
-- Add alert severity rules.
+- Added optional background polling controlled by `ENABLE_BACKGROUND_POLLING`.
+- Added WebSocket endpoint at `/ws/alerts`.
+- Added manual refresh endpoint at `/api/ingest/run`.
+- Added alert severity rules for medium/high dashboard alerts.
+- Dashboard now refreshes counts, alerts, and signal rows from WebSocket payloads without a page refresh.
 
 Deliverable:
 - New signals can appear in the dashboard without page refresh.
@@ -156,7 +160,7 @@ Deliverable:
 
 ## Immediate Next Actions
 
-1. Start Phase 3 dashboard implementation.
-2. Expose stored news, insights, forecasts, and governance reviews through API endpoints.
-3. Add frontend views for latest signals, source links, confidence, and audit state.
-4. Tighten source-specific search queries for more relevant Middle East market signals.
+1. Start Phase 5 hardening and governance.
+2. Tighten source-specific search queries for more relevant Middle East market signals.
+3. Add richer governance checks and audit detail.
+4. Decide whether to implement real Gemini analysis now or keep rule-based analysis for the prototype.
