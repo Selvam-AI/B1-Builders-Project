@@ -30,6 +30,13 @@ gmf = "geopolitical_market_forecaster.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+geopolitical_market_forecaster = [
+    "templates/*.html",
+    "static/*.css",
+    "static/*.js",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]

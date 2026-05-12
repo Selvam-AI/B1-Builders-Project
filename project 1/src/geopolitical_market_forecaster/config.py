@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-REPO_ROOT = ROOT_DIR.parent
 load_dotenv(ROOT_DIR / ".env")
 
 
@@ -23,7 +22,7 @@ class Settings(BaseModel):
     ingest_page_size: int = 10
     analysis_provider: str = "rule_based"
     gemini_model: str = "gemini-1.5-flash"
-    error_log_path: str = str(REPO_ROOT / "ERROR_LOG.txt")
+    error_log_path: str = str(ROOT_DIR / "ERROR_LOG.txt")
     enable_background_polling: bool = False
     alert_poll_seconds: int = 300
 
@@ -48,7 +47,7 @@ def get_settings() -> Settings:
         ingest_page_size=int(os.getenv("INGEST_PAGE_SIZE", "10")),
         analysis_provider=os.getenv("ANALYSIS_PROVIDER", "rule_based"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
-        error_log_path=os.getenv("ERROR_LOG_PATH", str(REPO_ROOT / "ERROR_LOG.txt")),
+        error_log_path=os.getenv("ERROR_LOG_PATH", str(ROOT_DIR / "ERROR_LOG.txt")),
         enable_background_polling=os.getenv(
             "ENABLE_BACKGROUND_POLLING",
             "false",

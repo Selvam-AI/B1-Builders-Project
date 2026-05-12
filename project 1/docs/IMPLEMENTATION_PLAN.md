@@ -97,7 +97,7 @@ Actions:
 - Verified repeated Guardian ingestion deduplicates stored records by URL.
 - NewsAPI client is implemented, but live verification returned provider `HTTP 401`; check or regenerate `NEWS_API_KEY` before using it.
 - RSS fallback is implemented for no-key ingestion.
-- Provider/API failures are sanitized, written to root `ERROR_LOG.txt`, and do not crash ingestion.
+- Provider/API failures are sanitized, written to project `ERROR_LOG.txt`, and do not crash ingestion.
 
 Deliverable:
 - The project can fetch recent Middle East news and persist normalized records.
@@ -164,3 +164,11 @@ Deliverable:
 1. Review the dashboard and governance report.
 2. Decide whether to refine source queries, implement Gemini analysis, or prepare deployment.
 3. Optionally add active governance gates in a future enhancement pass.
+
+## Best Next Options
+
+1. Refine source relevance so Guardian/RSS queries return more Middle East market-specific items and fewer unrelated live-blog articles.
+2. Implement real Gemini analysis once `GEMINI_API_KEY` is available, while keeping `ANALYSIS_PROVIDER=rule_based` as the safe default.
+3. Prepare deployment notes and production environment guidance for hosting the FastAPI app, database, runtime logs, and secrets.
+4. Improve dashboard usability with filters by source, tier, market, confidence, governance status, and date.
+5. Review and commit the deliverable project structure under `project 1/`.

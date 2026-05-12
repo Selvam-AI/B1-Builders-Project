@@ -1,7 +1,7 @@
 # Local environment and runtime files
 .env
-project 1/.env
-project 1/data/*.db
+data/*.db
+ERROR_LOG.txt
 
 # Python
 __pycache__/
