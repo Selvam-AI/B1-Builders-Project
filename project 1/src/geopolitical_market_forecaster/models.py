@@ -53,4 +53,15 @@ class GovernanceReview(BaseModel):
 
 class PipelineResult(BaseModel):
     items_collected: int
+    insights_created: int = 0
+    forecasts_created: int = 0
+    reviews_created: int = 0
     reviews: list[GovernanceReview]
+
+
+class IngestionResult(BaseModel):
+    source: str
+    fetched: int
+    inserted: int
+    skipped: int
+    errors: list[str] = Field(default_factory=list)

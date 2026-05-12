@@ -1,6 +1,6 @@
 # Geopolitical Market Forecaster - Implementation Plan
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 ## Project Goal
 
@@ -55,6 +55,7 @@ This stack should be validated as implementation begins.
 - Backend: Python with FastAPI for API endpoints and orchestration.
 - Agent orchestration: start with simple explicit service classes; evaluate CrewAI or AutoGen after the first vertical slice works.
 - LLM layer: Gemini API free tier, with provider abstraction so models can be swapped later.
+- Analysis provider selection: `ANALYSIS_PROVIDER=rule_based` by default, with `gemini` reserved for Gemini-powered analysis once `GEMINI_API_KEY` is available.
 - Data ingestion: RSS feeds and/or zero-cost news APIs first; paid APIs deferred.
 - Storage: SQLite for prototype persistence and audit logs.
 - Frontend: React/Vite or a lightweight FastAPI-rendered dashboard, depending on project scope chosen next.
@@ -85,26 +86,33 @@ Deliverable:
 
 ### Phase 1 - First Vertical Slice
 
-Status: Not started
+Status: Complete
 
 Actions:
-- Implement a small ingest pipeline using one or two public sources.
-- Store article records and run metadata.
-- Add a manual command to fetch and inspect latest items.
-- Add basic validation and deduplication.
+- Implemented a small ingest pipeline using Guardian, NewsAPI, and RSS source options.
+- Added SQLite persistence for normalized news records.
+- Added manual commands to fetch and inspect latest items.
+- Added URL-based deduplication.
+- Verified Guardian live ingestion with `GUARDIAN_API_KEY`.
+- Verified repeated Guardian ingestion deduplicates stored records by URL.
+- NewsAPI client is implemented, but live verification returned provider `HTTP 401`; check or regenerate `NEWS_API_KEY` before using it.
+- RSS fallback is implemented for no-key ingestion.
+- Provider/API failures are sanitized, written to root `ERROR_LOG.txt`, and do not crash ingestion.
 
 Deliverable:
 - The project can fetch recent Middle East news and persist normalized records.
 
 ### Phase 2 - Agent Pipeline
 
-Status: Not started
+Status: Complete
 
 Actions:
-- Implement Scraper, Economic Analyst, Predictor, and Governor as separate modules.
-- Define structured inputs and outputs for each agent.
-- Add audit events for every handoff.
-- Add mocked LLM support for tests.
+- Implemented Scraper reading persisted news before falling back to live ingestion.
+- Implemented persisted outputs for Economic Analyst, Predictor, and Governor.
+- Added audit events for scraper, analyst, predictor, and governor handoffs.
+- Added `gmf show-status` to inspect table counts.
+- Latest analysis, forecast, and governance rows are refreshed per news URL; audit events preserve run history.
+- Added mocked/offline tests for agent pipeline persistence.
 
 Deliverable:
 - One command can run news ingestion through analysis, forecast, and governance review.
@@ -148,7 +156,7 @@ Deliverable:
 
 ## Immediate Next Actions
 
-1. Choose the Phase 1 ingestion source: RSS feeds, GDELT, or NewsAPI.
-2. Implement the first real ingestion command.
-3. Persist collected news items and audit events in SQLite.
-4. Replace the placeholder scraper output with normalized live or semi-live news records.
+1. Start Phase 3 dashboard implementation.
+2. Expose stored news, insights, forecasts, and governance reviews through API endpoints.
+3. Add frontend views for latest signals, source links, confidence, and audit state.
+4. Tighten source-specific search queries for more relevant Middle East market signals.

@@ -49,3 +49,75 @@ revisit phase 0 where you mentioned python3-venv and pip missing, check after in
 Minimal action summary:
 
 Confirmed `venv` and `pip` are installed, created `.venv`, installed dependencies, ran tests, verified CLI pipeline commands, confirmed SQLite initialization, and updated Phase 0 documentation.
+
+### 2026-05-12 - Phase 1 Source Preparation
+
+Prompt:
+
+```text
+we are moving to phase 1, do you need me to obtain any APIs for news feeds and RSS feeds. Provide list, I will attempt to obtain, then update .env before we proceed. Do you need anything from me to successfully complete this phase. Briefly tell me what this phase implementation will accomplish, and how is this phase a continuation of phase o. Be brief.
+```
+
+Minimal action summary:
+
+Explained ingestion sources, recommended starting with RSS/GDELT because they require no key, listed optional news API keys, and summarized Phase 1 goals.
+
+### 2026-05-12 - Begin Phase 1 Ingestion
+
+Prompt:
+
+```text
+I have obtained NEWS_API_KEY and GUARDIAN_API_KEY, then updated .env. Proceed with Phase 1.
+```
+
+Minimal action summary:
+
+Implemented and verified Phase 1 with Guardian live ingestion, SQLite news persistence, URL deduplication, ingest/show CLI commands, sanitized provider errors, and tests for provider mapping, pipeline behavior, and storage behavior.
+
+### 2026-05-12 - Retest NewsAPI Key
+
+Prompt:
+
+```text
+I pasted new API key for NewsAPI, check again.  Test it again. what is the gmf ingest-news --source name for newsapi.
+```
+
+Minimal action summary:
+
+Verified `NEWS_API_KEY` is present without exposing it, retested NewsAPI ingestion with `gmf ingest-news --source newsapi`, and confirmed the provider still returns `HTTP 401`.
+
+### 2026-05-12 - Add Provider Error Logging
+
+Prompt:
+
+```text
+If an API returned error, the application should not crash, it should log the error to a error_log file in root. But anytime in the future if the API worked fine, it shold incorporate the information into analysis. Implement as stated.
+```
+
+Minimal action summary:
+
+Added sanitized root-level provider error logging, kept ingestion non-crashing, and preserved successful-provider behavior so future API successes feed into storage and analysis.
+
+### 2026-05-12 - Add Analysis Provider Configuration
+
+Prompt:
+
+```text
+can I have both Rule-based analysis and Gemini-powered analysis, the choice selection made in config.py, right now I do not have Gemini api key, but when I do I can provide and select it. Create placeholder in config.py for gemini api key, analysis method etc.
+```
+
+Minimal action summary:
+
+Added configurable analysis provider settings with `rule_based` as default, Gemini placeholders for future use, and wired the Analyst Agent to choose analysis behavior from config.
+
+### 2026-05-12 - Start Phase 2 Agent Pipeline
+
+Prompt:
+
+```text
+move to Next Phase 2 - Agent Pipeline.
+```
+
+Minimal action summary:
+
+Completed Phase 2 by making the pipeline read stored news, persist latest agent outputs per news URL, record audit handoffs, add table-count visibility, and cover the workflow with offline tests.

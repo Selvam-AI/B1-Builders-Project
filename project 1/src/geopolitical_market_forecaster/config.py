@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
+REPO_ROOT = ROOT_DIR.parent
 load_dotenv(ROOT_DIR / ".env")
 
 
@@ -14,9 +15,15 @@ class Settings(BaseModel):
     app_env: str = "local"
     gemini_api_key: str | None = None
     news_api_key: str | None = None
+    guardian_api_key: str | None = None
+    currents_api_key: str | None = None
     database_url: str = "sqlite:///data/geopolitical_market_forecaster.db"
     default_region: str = "Middle East"
     default_news_query: str = "Middle East geopolitics oil shipping markets"
+    ingest_page_size: int = 10
+    analysis_provider: str = "rule_based"
+    gemini_model: str = "gemini-1.5-flash"
+    error_log_path: str = str(REPO_ROOT / "ERROR_LOG.txt")
 
 
 @lru_cache
@@ -25,6 +32,8 @@ def get_settings() -> Settings:
         app_env=os.getenv("APP_ENV", "local"),
         gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
         news_api_key=os.getenv("NEWS_API_KEY") or None,
+        guardian_api_key=os.getenv("GUARDIAN_API_KEY") or None,
+        currents_api_key=os.getenv("CURRENTS_API_KEY") or None,
         database_url=os.getenv(
             "DATABASE_URL",
             "sqlite:///data/geopolitical_market_forecaster.db",
@@ -34,4 +43,8 @@ def get_settings() -> Settings:
             "DEFAULT_NEWS_QUERY",
             "Middle East geopolitics oil shipping markets",
         ),
+        ingest_page_size=int(os.getenv("INGEST_PAGE_SIZE", "10")),
+        analysis_provider=os.getenv("ANALYSIS_PROVIDER", "rule_based"),
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
+        error_log_path=os.getenv("ERROR_LOG_PATH", str(REPO_ROOT / "ERROR_LOG.txt")),
     )

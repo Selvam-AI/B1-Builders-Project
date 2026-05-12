@@ -45,7 +45,16 @@ Update `.env` with API keys when needed:
 ```text
 GEMINI_API_KEY=your_key_here
 NEWS_API_KEY=your_key_here
+GUARDIAN_API_KEY=your_key_here
+CURRENTS_API_KEY=your_key_here
+ANALYSIS_PROVIDER=rule_based
+GEMINI_MODEL=gemini-1.5-flash
 ```
+
+Analysis providers:
+
+- `rule_based` - default, no LLM key required.
+- `gemini` - reserved for Gemini-powered analysis once `GEMINI_API_KEY` is available and LLM execution is implemented.
 
 ## Run
 
@@ -71,6 +80,38 @@ Or, after `pip install -e .`:
 gmf run-pipeline
 ```
 
+The pipeline reads stored news from SQLite first, then writes economic insights, forecasts, governance reviews, and audit events back to SQLite.
+Latest agent outputs are refreshed per news URL; audit events preserve the run history.
+
+Use `gmf run-pipeline --verbose` only when you need the full nested JSON response.
+
+Fetch and store news for Phase 1:
+
+```bash
+gmf ingest-news --source auto
+```
+
+Available sources:
+
+- `auto` - tries Guardian, then NewsAPI, then RSS.
+- `guardian` - uses `GUARDIAN_API_KEY`.
+- `newsapi` - uses `NEWS_API_KEY`.
+- `rss` - uses public RSS feeds and no API key.
+
+Provider/API failures do not crash the application. Sanitized failures are appended to the root `ERROR_LOG.txt`, and `auto` mode continues to the next available source.
+
+View stored news:
+
+```bash
+gmf show-news --limit 5
+```
+
+View database table counts:
+
+```bash
+gmf show-status
+```
+
 ## Test
 
 ```bash
@@ -94,7 +135,7 @@ pytest
 Expected result:
 
 ```text
-1 passed
+4 passed
 ```
 
 The placeholder agent pipeline returns one governed forecast:
@@ -111,3 +152,7 @@ You should see JSON with:
 ```
 
 The SQLite database is initialized at `data/geopolitical_market_forecaster.db` with an `audit_events` table.
+
+Phase 1 also creates a `news_items` table when ingestion runs. Phase 2 creates `economic_insights`, `market_forecasts`, and `governance_reviews` tables when the pipeline runs.
+
+Known provider note: Guardian ingestion has been verified. NewsAPI returned `HTTP 401`, so that key may need to be checked or regenerated before NewsAPI can be used.

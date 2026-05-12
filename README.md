@@ -14,4 +14,4 @@ See `project 1/README.md` for local setup and run commands.
 
 ## Current Phase
 
-Phase 0 repository setup is complete. The next implementation phase is the first vertical slice: live or semi-live news ingestion, normalization, persistence, and audit logging.
+Phases 0, 1, and 2 are complete. The next implementation phase is Phase 3: a dashboard for reviewing latest news, insights, forecasts, confidence, and governance state.
