@@ -4,7 +4,7 @@ Last updated: 2026-05-12
 
 ## Current Governance Position
 
-The project currently uses a basic Governor Agent. It is a post-forecast review layer, not a strict preventive gate.
+The project currently uses a basic Governor Agent implemented as a plain Python class. CrewAI is not used. The Governor is a post-forecast review layer, not a strict preventive gate.
 
 The Governor Agent reviews each forecast after the Predictor Agent creates it. Its output is persisted to the SQLite `governance_reviews` table and summarized in the dashboard Governance column.
 

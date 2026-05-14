@@ -24,6 +24,25 @@ async def test_rule_based_analysis_detects_market_themes():
     assert "energy" in insight.affected_markets
 
 
+def test_auto_provider_prefers_gemini_then_openai_then_rules():
+    assert (
+        Settings(
+            analysis_provider="auto",
+            gemini_api_key="gemini-key",
+            openai_api_key="openai-key",
+        ).resolved_analysis_provider()
+        == "gemini"
+    )
+    assert (
+        Settings(
+            analysis_provider="auto",
+            openai_api_key="openai-key",
+        ).resolved_analysis_provider()
+        == "openai"
+    )
+    assert Settings(analysis_provider="auto").resolved_analysis_provider() == "rule_based"
+
+
 @pytest.mark.asyncio
 async def test_gemini_analysis_placeholder_without_key():
     item = NewsItem(
@@ -38,3 +57,20 @@ async def test_gemini_analysis_placeholder_without_key():
 
     assert insight.signal_tier == SignalTier.fyi
     assert "GEMINI_API_KEY is not set" in insight.rationale
+
+
+@pytest.mark.asyncio
+async def test_openai_analysis_falls_back_without_key():
+    item = NewsItem(
+        title="Oil shipping risk rises near the Red Sea",
+        source="Test",
+        url="https://example.com/openai-fallback",
+    )
+
+    insight = await EconomicAnalystAgent(Settings(analysis_provider="openai")).analyze(
+        item
+    )
+
+    assert insight.signal_tier == SignalTier.actionable
+    assert "OPENAI_API_KEY is not set" in insight.rationale
+    assert "energy supply" in insight.themes

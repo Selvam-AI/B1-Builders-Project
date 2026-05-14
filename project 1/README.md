@@ -18,7 +18,7 @@ The Geopolitical Market Forecaster is a full-stack AI-assisted prototype that in
 - Persisted news, insights, forecasts, governance reviews, and audit events in SQLite.
 - Added realtime dashboard refresh via WebSockets.
 - Added a governance report and regression tests.
-- Current verification: `17 passed`.
+- Current verification: `19 passed`.
 
 ---
 
@@ -78,9 +78,11 @@ AI tools and services used:
 - Codex: project planning, implementation, debugging, refactoring, and documentation.
 - Guardian Open Platform: verified live news ingestion.
 - NewsAPI: client implemented, but live key verification returned `HTTP 401`.
-- Gemini: planned analysis provider; currently configured as a placeholder until `GEMINI_API_KEY` is available.
+- LLM analysis provider: `ANALYSIS_PROVIDER=auto` uses Gemini when `GEMINI_API_KEY` is set, otherwise OpenAI when `OPENAI_API_KEY` is set, otherwise rule-based analysis.
+- Gemini: configured as a placeholder provider.
+- OpenAI: configured as the first working LLM analysis provider when Gemini is absent.
 
-AI agents in the application:
+AI agents in the application are plain Python classes under `src/geopolitical_market_forecaster/agents/`. CrewAI is not used in the current runtime.
 
 - Scraper Agent: collects and normalizes market-relevant news.
 - Economic Analyst Agent: creates market-oriented insights.
@@ -97,7 +99,8 @@ Key review points:
 
 - Use FastAPI/Jinja2 first instead of React/Vite to keep the dashboard aligned with the Python backend.
 - Keep governance basic for this prototype and document future active governance improvements.
-- Default to rule-based analysis and reserve Gemini for future API-backed analysis.
+- Default to automatic provider selection with rule-based fallback when LLM keys are absent or unavailable.
+- Use automatic analysis provider selection so missing LLM keys fall back safely to rule-based analysis.
 - Keep background polling disabled by default to avoid unwanted API usage.
 
 ---
@@ -130,16 +133,18 @@ Create or update `.env`:
 
 ```text
 GEMINI_API_KEY=
+OPENAI_API_KEY=
 NEWS_API_KEY=your_key_here
 GUARDIAN_API_KEY=your_key_here
 CURRENTS_API_KEY=
 APP_ENV=local
 DATABASE_URL=sqlite:///data/geopolitical_market_forecaster.db
-DEFAULT_REGION=Middle East
-DEFAULT_NEWS_QUERY=Middle East geopolitics oil shipping markets
+DEFAULT_REGION="Middle East"
+DEFAULT_NEWS_QUERY="Middle East geopolitics oil shipping markets"
 INGEST_PAGE_SIZE=10
-ANALYSIS_PROVIDER=rule_based
+ANALYSIS_PROVIDER=auto
 GEMINI_MODEL=gemini-1.5-flash
+OPENAI_MODEL=gpt-4o-mini
 ERROR_LOG_PATH=ERROR_LOG.txt
 ENABLE_BACKGROUND_POLLING=false
 ALERT_POLL_SECONDS=300
@@ -150,6 +155,19 @@ ALERT_POLL_SECONDS=300
 ## Usage
 
 ### Run The Application
+
+You can start the dashboard using the helper script:
+
+```bash
+scripts/run_dashboard.sh
+```
+
+If you are inside the `scripts/` folder, run:
+
+```bash
+./run_dashboard.sh
+```
+Alternatively:
 
 From the project folder, activate the virtual environment:
 
@@ -174,17 +192,6 @@ http://127.0.0.1:8000/dashboard
 
 Stop the dashboard server by pressing `Ctrl + C` in the terminal where Uvicorn is running.
 
-You can also start the dashboard using the helper script:
-
-```bash
-scripts/run_dashboard.sh
-```
-
-If you are inside the `scripts/` folder, run:
-
-```bash
-./run_dashboard.sh
-```
 
 ### Basic Checks
 
@@ -242,6 +249,8 @@ gmf show-status
 ```
 
 Provider/API failures do not crash the application. Sanitized failures are appended to `ERROR_LOG.txt`.
+
+`ANALYSIS_PROVIDER=auto` resolves in this order: Gemini if `GEMINI_API_KEY` is present, OpenAI if `OPENAI_API_KEY` is present, and rule-based analysis if no LLM key is available. OpenAI analysis failures also fall back to the rule-based analyst so the pipeline can continue.
 
 ### Developer Tests
 

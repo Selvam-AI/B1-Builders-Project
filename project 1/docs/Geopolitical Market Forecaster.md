@@ -3,6 +3,8 @@
 
 #### This system serves as a practical application of multi-agent orchestration that transforms raw global news into actionable strategic foresight.  
 
+Current implementation note: this project does not use CrewAI or AutoGen. The Scraper, Economic Analyst, Predictor, and Governor agents are plain Python classes coordinated by the project pipeline.
+
 #### Multi-Agent Functional Architecture 
 
 **Live Data Extraction (The Scraper Agent):**  : The system is designed to scrape live news in real-time, focusing initially on the Middle East.  
@@ -15,7 +17,7 @@ Its specific actions include:
 
 - 2. Role within Multi-Agent Orchestration: The Scraper is typically the first stage in an autonomous workflow. It solves the "Coordination Tax" (organizational friction) by managing the initial information hand-off without human intervention.  
 > The Trigger Mechanism: Once the Scraper identifies a bottleneck or extracts relevant market data from a URL, it automatically triggers the next agent in the loop, such as an Analyst, Fixer, or Economic Analyst Agent.  
-> Orchestration Frameworks: Tools like CrewAI or Microsoft AutoGen are used to define the Scraper as a distinct object in code, allowing it to hand off "briefs" to subsequent agents autonomously.  
+> Current Orchestration: This project defines the Scraper as a plain Python class and hands work to later agents through the local `ForecastPipeline`. CrewAI and AutoGen are not used.  
 
 - 3. Solving "Organizational Gravity": By automating the research and fact-gathering phase, the Scraper agent is a key component in achieving "Antigravity"—a design philosophy aimed at creating a zero-friction work environment.  
 >> High-Variance Problem Solving: It specifically targets workflows that are difficult to automate with traditional, rules-based IT by providing a dynamic way to ingest ever-changing information.  
@@ -45,7 +47,7 @@ Neutralising "Organizational Gravity": By using a multi-agent system where the E
 Governance-Ready Accountability: the Economic Analyst's logic can be monitored by a Governor Agent. This ensures that the system's financial analysis remains transparent, accurate, and aligned with company policy, fulfilling the requirements for "Governance-Ready" organizational systems.  
 
 Strategic Implementation:  
-- In a developer's workflow, the Economic Analyst would be defined as an object in a framework like CrewAI or AutoGen.  
+- In this project, the Economic Analyst is defined as a plain Python class rather than a CrewAI or AutoGen object.  
 - While the human facilitator acts as the "Senior Architect" (using tools like ChatGPT to plan the logic), the Economic Analyst agent operates tactical logic via an "Agentic Brain" like the Gemini API.  
 - This setup allows the facilitator to maintain a "human-in-the-loop" presence while delegating high-variance, data-heavy analysis to the autonomous agent.  
 
@@ -59,7 +61,7 @@ Strategic Implementation:
 - Interaction within a Multi-Agent Team: The Predictor does not work in isolation; it is part of a four-stage autonomous workflow designed to solve "agent sprawl"—a problem where uncoordinated agents create more work or conflicting answers.  
 
 > The Chain of Command: The Scraper agent (the Strategist) first extracts raw news data. This is passed to the Economic Analyst agent, which identifies financial implications. The Predictor agent then synthesises these insights to generate its market forecasts.  
-> Autonomous Hand-offs: Using frameworks like CrewAI or AutoGen, the "hand-off" between the Analyst and the Predictor happens automatically. This neutralises the "Coordination Tax"—the meetings and manual updates typically required to synchronize complex research tasks.  
+> Pipeline Hand-offs: The hand-off between the Analyst and Predictor happens through the project's explicit Python pipeline rather than CrewAI or AutoGen.  
 
 - The Predictor in the "Antigravity" Framework: In the broader philosophy of the B1 Builders Programme, the Predictor role contributes to "Antigravity"—the use of AI to create a zero-friction work environment.  
 
@@ -87,6 +89,4 @@ Strategic Implementation:
 **AI Summarization and Categorization:** Instead of just displaying news, the dashboard functions as an AI Filter. It uses an LLM layer to summarize long news threads into brief insights and categorises them into actionable tiers, such as "Actionable," "FYI," or "Noise".  
 
 **Real-Time Interactivity:** Functionality is enhanced through the use of WebSockets, allowing predictions and news alerts to "pop up" on a browser dashboard instantly without needing a page refresh.  
-
-
 

@@ -13,6 +13,7 @@ load_dotenv(ROOT_DIR / ".env")
 class Settings(BaseModel):
     app_env: str = "local"
     gemini_api_key: str | None = None
+    openai_api_key: str | None = None
     news_api_key: str | None = None
     guardian_api_key: str | None = None
     currents_api_key: str | None = None
@@ -20,11 +21,22 @@ class Settings(BaseModel):
     default_region: str = "Middle East"
     default_news_query: str = "Middle East geopolitics oil shipping markets"
     ingest_page_size: int = 10
-    analysis_provider: str = "rule_based"
+    analysis_provider: str = "auto"
     gemini_model: str = "gemini-1.5-flash"
+    openai_model: str = "gpt-4o-mini"
     error_log_path: str = str(ROOT_DIR / "ERROR_LOG.txt")
     enable_background_polling: bool = False
     alert_poll_seconds: int = 300
+
+    def resolved_analysis_provider(self) -> str:
+        provider = self.analysis_provider.lower()
+        if provider != "auto":
+            return provider
+        if self.gemini_api_key:
+            return "gemini"
+        if self.openai_api_key:
+            return "openai"
+        return "rule_based"
 
 
 @lru_cache
@@ -32,6 +44,7 @@ def get_settings() -> Settings:
     return Settings(
         app_env=os.getenv("APP_ENV", "local"),
         gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
+        openai_api_key=os.getenv("OPENAI_API_KEY") or None,
         news_api_key=os.getenv("NEWS_API_KEY") or None,
         guardian_api_key=os.getenv("GUARDIAN_API_KEY") or None,
         currents_api_key=os.getenv("CURRENTS_API_KEY") or None,
@@ -45,8 +58,9 @@ def get_settings() -> Settings:
             "Middle East geopolitics oil shipping markets",
         ),
         ingest_page_size=int(os.getenv("INGEST_PAGE_SIZE", "10")),
-        analysis_provider=os.getenv("ANALYSIS_PROVIDER", "rule_based"),
+        analysis_provider=os.getenv("ANALYSIS_PROVIDER", "auto"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         error_log_path=os.getenv("ERROR_LOG_PATH", str(ROOT_DIR / "ERROR_LOG.txt")),
         enable_background_polling=os.getenv(
             "ENABLE_BACKGROUND_POLLING",

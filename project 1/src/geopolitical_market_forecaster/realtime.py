@@ -68,6 +68,7 @@ def dashboard_payload(settings: Settings, event: str) -> dict[str, Any]:
         "summary": dashboard_summary(settings.database_url),
         "signals": signals,
         "alerts": alerts,
+        "analysis_provider": settings.resolved_analysis_provider(),
     }
 
 

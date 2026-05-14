@@ -86,7 +86,7 @@ async def dashboard(request: Request) -> HTMLResponse:
         {
             "summary": dashboard_summary(settings.database_url),
             "signals": list_dashboard_signals(settings.database_url),
-            "analysis_provider": settings.analysis_provider,
+            "analysis_provider": settings.resolved_analysis_provider(),
         },
     )
 
@@ -96,7 +96,7 @@ async def dashboard_data() -> dict:
     settings = get_settings()
     initialize_database(settings.database_url)
     payload = dashboard_payload(settings, "snapshot")
-    payload["analysis_provider"] = settings.analysis_provider
+    payload["analysis_provider"] = settings.resolved_analysis_provider()
     return payload
 
 

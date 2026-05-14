@@ -6,6 +6,8 @@ Last updated: 2026-05-12
 
 Build an AI-driven dashboard that identifies, explains, and forecasts potential market shifts from global news, beginning with Middle East geopolitical coverage. The system should demonstrate multi-agent orchestration with clear governance, auditability, and human-in-the-loop oversight.
 
+Implementation note: the current agents are plain Python classes coordinated by an explicit pipeline. CrewAI and AutoGen are not used in this project runtime.
+
 ## Working Architecture
 
 ### 1. Scraper Agent
@@ -53,9 +55,9 @@ Initial responsibilities:
 This stack should be validated as implementation begins.
 
 - Backend: Python with FastAPI for API endpoints and orchestration.
-- Agent orchestration: start with simple explicit service classes; evaluate CrewAI or AutoGen after the first vertical slice works.
-- LLM layer: Gemini API free tier, with provider abstraction so models can be swapped later.
-- Analysis provider selection: `ANALYSIS_PROVIDER=rule_based` by default, with `gemini` reserved for Gemini-powered analysis once `GEMINI_API_KEY` is available.
+- Agent orchestration: simple explicit Python service classes coordinated by `ForecastPipeline`; CrewAI and AutoGen are not used in the current implementation.
+- LLM layer: provider abstraction that can use Gemini or OpenAI, with deterministic rule-based fallback.
+- Analysis provider selection: `ANALYSIS_PROVIDER=auto` resolves to Gemini when `GEMINI_API_KEY` is set, OpenAI when `OPENAI_API_KEY` is set, and rules when no LLM key is available.
 - Data ingestion: RSS feeds and/or zero-cost news APIs first; paid APIs deferred.
 - Storage: SQLite for prototype persistence and audit logs.
 - Frontend: React/Vite or a lightweight FastAPI-rendered dashboard, depending on project scope chosen next.
@@ -162,13 +164,13 @@ Deliverable:
 ## Immediate Next Actions
 
 1. Review the dashboard and governance report.
-2. Decide whether to refine source queries, implement Gemini analysis, or prepare deployment.
+2. Decide whether to refine source queries, expand Gemini analysis, or prepare deployment.
 3. Optionally add active governance gates in a future enhancement pass.
 
 ## Best Next Options
 
 1. Refine source relevance so Guardian/RSS queries return more Middle East market-specific items and fewer unrelated live-blog articles.
-2. Implement real Gemini analysis once `GEMINI_API_KEY` is available, while keeping `ANALYSIS_PROVIDER=rule_based` as the safe default.
+2. Expand Gemini analysis once `GEMINI_API_KEY` is available, while keeping `ANALYSIS_PROVIDER=auto` and rule-based fallback as the safe default.
 3. Prepare deployment notes and production environment guidance for hosting the FastAPI app, database, runtime logs, and secrets.
 4. Improve dashboard usability with filters by source, tier, market, confidence, governance status, and date.
 5. Review and commit the deliverable project structure under `project 1/`.

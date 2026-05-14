@@ -24,4 +24,4 @@ This file records local tools and editor extensions used for the Geopolitical Ma
 
 ## Not Added Yet
 
-- CrewAI: deferred until after the first vertical slice. The current plan uses plain Python service classes first, then evaluates whether an orchestration framework adds value.
+- CrewAI: not used in the current implementation. The application uses plain Python agent classes coordinated by the local `ForecastPipeline`.
