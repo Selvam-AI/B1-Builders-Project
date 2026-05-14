@@ -372,3 +372,17 @@ The user chose option 1 from the previous recommendation: investigate and resolv
 - Added direct recommendation endpoint and automatic recommendation creation after reservation.
 - Added tests for recommendation creation, cache reuse, reservation-triggered creation, and guest access restriction.
 - Prepared to commit after Phase 5 verification.
+
+## Prompt 16
+
+### User Prompt
+
+> proceed to implement phase 6 with suggestions.
+
+### Decision / Implementation Summary
+
+- Implemented Phase 6 feedback loop with member-only like/dislike feedback.
+- Enforced that feedback requires a matching reservation for the video session.
+- Allowed repeated feedback to update the existing member/video feedback record.
+- Added admin feedback summary with likes, dislikes, total feedback, and score.
+- Added tests for feedback create/update, invalid values, reservation requirement, admin summary, guest restriction, and member restriction.

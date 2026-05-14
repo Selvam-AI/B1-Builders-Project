@@ -161,6 +161,12 @@ AI video recommendations:
 - When provider settings are available, the recommendation service can request a short LiteLLM safety review before saving the video session.
 - Recommendation decisions are stored in `video_sessions` with provider, status, safety notes, and agent summary fields.
 
+Feedback loop:
+
+- Logged-in members can submit `like` or `dislike` feedback for video sessions they reserved.
+- Repeated feedback updates the member's existing response for that video session.
+- Admins can view likes, dislikes, total feedback, and score per video session.
+
 ---
 
 ## Project Structure

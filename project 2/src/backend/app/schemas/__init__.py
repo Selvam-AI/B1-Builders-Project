@@ -2,6 +2,9 @@
 
 from src.backend.app.schemas.core import (
     ApiStatus,
+    FeedbackCreate,
+    FeedbackRead,
+    FeedbackSummaryRead,
     OccupancyRead,
     ReservationCreate,
     ReservationRead,
@@ -14,6 +17,9 @@ from src.backend.app.schemas.auth import LoginRequest, MemberRegister, TokenResp
 
 __all__ = [
     "ApiStatus",
+    "FeedbackCreate",
+    "FeedbackRead",
+    "FeedbackSummaryRead",
     "LoginRequest",
     "MemberRegister",
     "OccupancyRead",

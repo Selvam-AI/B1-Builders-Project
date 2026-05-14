@@ -12,7 +12,8 @@ Current status:
 - Phase 3: Complete
 - Phase 4: Complete
 - Phase 5: Complete
-- Next phase: Phase 6, Feedback Loop
+- Phase 6: Complete
+- Next phase: Phase 7, Frontend Dashboard
 
 Completed so far:
 - Repository scaffold, evaluator-facing README, documentation, dependency files, and environment templates.
@@ -20,12 +21,13 @@ Completed so far:
 - Authentication and role handling with JWT bearer tokens, validated member email, seeded local admin, protected dashboard/broadcast routes, and Phase 3 tests.
 - Slot scheduling with member reserve/cancel endpoints, duplicate prevention, 20-member capacity enforcement, admin occupancy summary, and Phase 4 tests.
 - AI video recommendation workflow with cached `video_sessions`, provider-aware mock fallback, automatic recommendation creation after reservation, and Phase 5 tests.
+- Feedback loop with member like/dislike create/update, reservation validation, admin feedback summaries, and Phase 6 tests.
 
 Next focus:
-- Feedback endpoints for like/dislike responses.
-- One feedback record per member and video session.
-- Admin feedback summary.
-- Recommendation scoring signal for later Trainer Agent decisions.
+- Connect React/Vite frontend to backend auth, scheduling, recommendations, and feedback APIs.
+- Replace static dashboard scaffold with usable member/admin workflows.
+- Keep guest access limited to entry/login.
+- Verify browser behavior manually and with focused frontend tests if practical.
 
 ## Phase 1: Repository Foundation
 
@@ -178,6 +180,16 @@ Deliverables:
 - Feedback model and service.
 - Recommendation scoring adjustment.
 - Tests for feedback capture and summary.
+
+Status: Complete.
+
+Implemented:
+- `POST /api/feedback` for authenticated members to submit `like` or `dislike`.
+- One feedback record per member and video session; repeated submissions update the existing record.
+- Feedback requires the member to have a matching reservation for the video session's time slot and workout category.
+- `GET /api/admin/feedback-summary` for admin-only likes, dislikes, total feedback, and score per video session.
+- Recommendation scoring signal is represented by `score = likes - dislikes` for later Trainer Agent use.
+- Phase 6 ASGI tests covering create/update, reservation requirement, allowed values, admin summary, guest restriction, and member restriction.
 
 ## Phase 7: Frontend Dashboard
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -53,6 +54,32 @@ class VideoSessionRead(BaseModel):
 class VideoRecommendationRequest(BaseModel):
     time_slot_id: int = Field(gt=0)
     workout_category_id: int = Field(gt=0)
+
+
+class FeedbackCreate(BaseModel):
+    video_session_id: int = Field(gt=0)
+    value: Literal["like", "dislike"]
+
+
+class FeedbackRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    video_session_id: int
+    value: str
+    created_at: datetime
+
+
+class FeedbackSummaryRead(BaseModel):
+    video_session_id: int
+    title: str | None
+    time_slot_id: int
+    workout_category_id: int
+    likes: int
+    dislikes: int
+    total_feedback: int
+    score: int
 
 
 class ReservationCreate(BaseModel):

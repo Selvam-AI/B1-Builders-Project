@@ -8,6 +8,9 @@ from src.backend.app.core.security import get_current_user, require_admin, requi
 from src.backend.app.models import SlotSignup, TimeSlot, User, VideoSession, WorkoutCategory
 from src.backend.app.schemas import (
     ApiStatus,
+    FeedbackCreate,
+    FeedbackRead,
+    FeedbackSummaryRead,
     LoginRequest,
     MemberRegister,
     OccupancyRead,
@@ -21,6 +24,7 @@ from src.backend.app.schemas import (
     WorkoutCategoryRead,
 )
 from src.backend.app.services.auth import authenticate_user, create_member, issue_token, serialize_user
+from src.backend.app.services.feedback import create_or_update_feedback, list_feedback_summaries
 from src.backend.app.services.recommendations import get_or_create_video_recommendation
 from src.backend.app.services.scheduling import (
     cancel_reservation,
@@ -36,8 +40,8 @@ router = APIRouter()
 async def api_status() -> ApiStatus:
     return ApiStatus(
         status="ok",
-        phase="phase-5-ai-video-recommendations",
-        message="FitHub AI backend recommendation workflow is ready.",
+        phase="phase-6-feedback-loop",
+        message="FitHub AI backend feedback loop is ready.",
         ai_llm_provider=settings.ai_llm_provider,
         ai_recommender_mode=settings.ai_recommender_mode,
         mock_fallback_enabled=settings.ai_allow_mock_fallback,
@@ -88,6 +92,14 @@ async def admin_occupancy(
     return list_slot_occupancy(db)
 
 
+@router.get("/admin/feedback-summary", response_model=list[FeedbackSummaryRead])
+async def admin_feedback_summary(
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> list[FeedbackSummaryRead]:
+    return list_feedback_summaries(db)
+
+
 @router.post("/reservations", response_model=ReservationRead, status_code=201)
 async def reserve_slot(
     payload: ReservationCreate,
@@ -114,6 +126,15 @@ async def delete_reservation(
     current_member: User = Depends(require_member),
 ) -> None:
     cancel_reservation(db, current_member, reservation_id)
+
+
+@router.post("/feedback", response_model=FeedbackRead)
+async def submit_feedback(
+    payload: FeedbackCreate,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> FeedbackRead:
+    return create_or_update_feedback(db, current_member, payload)
 
 
 @router.post("/video-sessions/recommend", response_model=VideoSessionRead)
