@@ -2,6 +2,8 @@
 
 from src.backend.app.schemas.core import (
     ApiStatus,
+    BroadcastSessionCreate,
+    BroadcastSessionRead,
     FeedbackCreate,
     FeedbackRead,
     FeedbackSummaryRead,
@@ -9,6 +11,9 @@ from src.backend.app.schemas.core import (
     ReservationCreate,
     ReservationRead,
     TimeSlotRead,
+    UserStatusUpdate,
+    VideoPlaybackConfirmed,
+    VideoPlaybackFailure,
     VideoRecommendationRequest,
     VideoSessionRead,
     WorkoutCategoryRead,
@@ -17,6 +22,8 @@ from src.backend.app.schemas.auth import LoginRequest, MemberRegister, TokenResp
 
 __all__ = [
     "ApiStatus",
+    "BroadcastSessionCreate",
+    "BroadcastSessionRead",
     "FeedbackCreate",
     "FeedbackRead",
     "FeedbackSummaryRead",
@@ -26,6 +33,9 @@ __all__ = [
     "ReservationCreate",
     "ReservationRead",
     "TimeSlotRead",
+    "UserStatusUpdate",
+    "VideoPlaybackConfirmed",
+    "VideoPlaybackFailure",
     "VideoRecommendationRequest",
     "TokenResponse",
     "UserRead",

@@ -1,0 +1,27 @@
+Is CrewAI implemented. Can agents work independently of each other, I propose the agent responsible for selecting videos, look for videos in the background to ensure they are embedable=true and playable (without interfering with user broadcast), and update cache, such that both categories have 5 videos cached. When the user selects the category, the agent picks video from cache. It always plays a least played video first. A video that has been played 3 times will be replaced in the cache only if a new video meeting conditions is found. All this happens when the app is running. The agent updates cache once every day.
+
+Audio issue - 
+The next most likely issue is YouTube iframe audio inside the VM/browser sandbox, not the app state.
+
+Because:
+
+VM audio device is present
+OS/browser are unmuted
+direct YouTube has volume
+you manually unmute after playback begins
+the app now explicitly sends unMute(), setVolume(100), and playVideo()
+The remaining likely causes are:
+
+YouTube embed iframe audio is blocked or restricted in that browser/VM session
+Direct YouTube can work while embedded iframe audio behaves differently.
+
+Autoplay policy still treats the embedded player as not user-activated
+Even though you click Unmute, the player may not grant audible playback if the iframe did not receive activation as expected.
+
+Browser profile/site permission issue
+The app origin http://127.0.0.1:5173 may have autoplay/media permission restrictions.
+
+VM/browser-specific quirk
+Especially common with embedded media, Vite dev server, and VM audio routing.
+
+I agree: shelve it for later. The application logic is now doing the correct thing for audio control. For evaluation/demo, document it as:

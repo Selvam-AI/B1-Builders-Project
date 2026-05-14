@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: str = Field(default="development", alias="APP_ENV")
+    debug: bool | None = Field(default=None, alias="DEBUG")
     database_url: str = Field(default="sqlite:///./data/fithub_ai.db", alias="DATABASE_URL")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     youtube_api_key: str = Field(default="", alias="YOUTUBE_API_KEY")
@@ -20,6 +21,28 @@ class Settings(BaseSettings):
     seed_admin: bool = Field(default=True, alias="SEED_ADMIN")
     admin_email: str = Field(default="admin@example.com", alias="ADMIN_EMAIL")
     admin_password: str = Field(default="admin123", alias="ADMIN_PASSWORD")
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug_flag(cls, value: object) -> bool | None:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"1", "true", "yes", "on", "debug", "development"}:
+                return True
+            if normalized in {"0", "false", "no", "off", "quiet", "production"}:
+                return False
+            return None
+        return None
+
+    @model_validator(mode="after")
+    def default_debug_for_development(self) -> "Settings":
+        if self.debug is None:
+            self.debug = self.app_env.lower() == "development"
+        return self
 
 
 settings = Settings()

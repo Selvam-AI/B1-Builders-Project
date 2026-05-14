@@ -386,3 +386,113 @@ The user chose option 1 from the previous recommendation: investigate and resolv
 - Allowed repeated feedback to update the existing member/video feedback record.
 - Added admin feedback summary with likes, dislikes, total feedback, and score.
 - Added tests for feedback create/update, invalid values, reservation requirement, admin summary, guest restriction, and member restriction.
+
+## Prompt 17
+
+### User Prompt
+
+> I want to ensure this is a  Single Page Application (SPA) in React. I am fine with suggested Phase 7 scope. The landing page design could take inspiration from mock_up_fronend_page* attached, and you may use the image medium_shot_woman* attached.
+
+### Decision / Implementation Summary
+
+- Replaced the static frontend scaffold with a React/Vite single page application.
+- Used the supplied workout image as the hero visual and adapted the provided mockup's high-contrast fitness landing style into the app entry screen.
+- Added login/register, member dashboard, and admin dashboard views inside one React app shell.
+- Connected the frontend to backend APIs for auth, slots, categories, reservations, video sessions, feedback, occupancy, and feedback summary.
+- Added local FastAPI CORS support for the Vite dev server.
+- Verified the frontend production build and backend test suite.
+
+## Prompt 18
+
+### User Prompt
+
+> I visited Frontend SPA. I selected a timeslot, appears in reservation. In workout broadcast I see a title of workout, it says Mock. The question is , how do I play the video. Is playing the video feature implemented?
+
+### Response Summary
+
+- Clarified that video playback is not implemented yet.
+- Explained that `Mock` means the backend used the safe mock/rule-based recommendation fallback, not a real YouTube video.
+- Identified the next implementation step as real YouTube video lookup plus frontend embedded playback.
+
+## Prompt 19
+
+### User Prompt
+
+> Here are some page layout improvement suggestions. 1) The signin box is partially hidden at the bottom. I suggest the sign in appear on the right side, below the menu options [slot broadcast feedback] in full screen mode, as a vertical box, with email and password widgets stacked vertically. SImilarly if Register is selected, all input widgets are placed vertically on top of each other in logical order. In half screen mode, the sign in box could be displayed at the bottom.  For the purpose of demonstration, include a time slot option 'demo now' which begin 2 seconds after selection. And ofcourse implement feature suggested above. We test this first before moving on to fine tuning other features, layouts, and resolving pending issues.
+
+### Decision / Implementation Summary
+
+- Moved the sign-in/register panel into the right side of the hero area for desktop.
+- Kept the auth panel stacked below the hero copy on smaller screens.
+- Changed login and registration inputs to a single vertical form flow.
+- Added a `Demo now` slot option that starts a demo reservation after two seconds.
+- Added embedded YouTube playback in workout broadcast cards.
+- Updated mock fallback recommendations to use playable demo YouTube IDs while keeping provider labelled as `mock`.
+
+## Prompt 20
+
+### User Prompt
+
+> why is video unavailable on our application page, but when I click on the play on youtube link, it does open youtube link in a different tab and play. The idea is it should play in our page.
+
+### Debug / Implementation Summary
+
+- Explained that YouTube can allow playback on YouTube while blocking third-party embedded playback.
+- Updated the backend recommendation service to use YouTube Data API search with `videoEmbeddable=true` when a `YOUTUBE_API_KEY` is available.
+- Kept mock fallback for no-network/no-key demo safety.
+- Changed frontend embeds to use `youtube-nocookie.com/embed/...` with an `origin` parameter.
+- Hardened the YouTube provider path so network/DNS failure falls back to mock recommendation instead of breaking reservation flows.
+
+## Prompt 21
+
+### User Prompt
+
+> suggestions - 1) if a video was embeddable, and it played, keep track of that video, because in the future if a new embedable video is not available, you could fallback to cached video. 2) Always attempt to pull a new video first, before fallback to cache.
+> Make a DEBUG flag in config.py such that if True, it prints the debug for frontend and backend -
+> The frontend now logs the full demo flow in the browser console: refresh, reservation request, backend recommendation refresh, loaded videos, provider, YouTube ID, whether the ID is still mock, and the embed URL. I’m building and testing now.
+
+### Decision / Implementation Summary
+
+- Added a shared backend `DEBUG` setting and exposed it through `/api/status`.
+- Changed backend recommendation debug printing so terminal `[FitHub AI]` lines print only when `DEBUG=true`.
+- Updated the frontend to load the backend debug flag and only print browser console debug logs when debugging is enabled.
+- Updated recommendation selection to try a fresh YouTube embeddable search first, then reuse a previously approved cached embeddable video, then fall back to mock recommendations.
+- Added backend tests for cached embeddable fallback and fresh-search-before-cache behavior.
+
+## Prompt 22
+
+### User Prompt
+
+> start to log prompt. here are some observations in the page that needs to be rectified.
+> 1. I didn't make reservation for 9:00 AM - 10:00 AM, but it shows in Reservation box.
+> 2. volume is audible in the host machine, is it because I am in the VMM?
+> 3. considering I am in the vmm, can next user login to frontend url? give it a domain name,  such that it is accessible from another computer.
+> 4. when I minimize full screen video, then resume video it starts from beginning, I want it to continue from where it left off. All participants must view same video continuity.
+> 5.Option for user to exit session. If exit they cannot get back into the same session.
+> 6. missing features - Guest login.
+> 7. why are slots, broadcast, feedback Menu options unresponsive?
+> 8. When Like / Dislike clicked, icon change color.
+> 9. Member or login name font color white, so it is visible against dark red background.
+> 10. remove Resume broadcast link in admin dashboard?
+> 11. Is the agent able to check if the video loaded is playing? If it doesn't play in 5 seconds, pick another new video, again if it doesn't play, then play a cached video. Only cache new videos that play.
+
+### Decision / Implementation Summary
+
+- Re-enabled prompt logging as requested.
+- Began immediate UI fixes for navigation, guest preview, feedback state styling, visible user identity, admin broadcast-chip hiding, and minimize-without-unmounting.
+- Identified shared video continuity and playback-health validation as a larger broadcast/player phase requiring shared backend session state and YouTube iframe player events.
+
+## Prompt 23
+
+### User Prompt
+
+> log this prompt. previously it taking longer time to start video, but now it is showing video unavailable. The broadcast box should be empty, not have a previously loaded video thumbnail, clear the video. Load video only when user select time slot, in this case Demo slot and enter. Currently you have widget in red background to display Demo starts automatically overlaid on Reserve a workout box. I think we could have a dedicated box between Reserve a workout and Workout broadcast, to display informative messages such as 'Demo will start now', or if it still loading video or looking for it, give that information. Remove Guest login options and related code and update this in documentation if already mentioned.
+
+### Decision / Implementation Summary
+
+- Removed guest-preview login UI and related frontend code from the SPA.
+- Updated README language so the prototype is described as visitor landing access plus authenticated member/admin workflows.
+- Changed the member dashboard so the broadcast panel stays empty until an active broadcast is started.
+- Removed the embedded preview player from the broadcast card to avoid stale thumbnails or old unavailable videos before a new session starts.
+- Added a dedicated session-status panel between reservation information and the broadcast area for demo-start, loading, and recommendation messages.
+- Removed the red `Demo starts automatically` button text from the reservation box.

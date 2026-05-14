@@ -11,6 +11,7 @@ class ApiStatus(BaseModel):
     ai_llm_provider: str
     ai_recommender_mode: str
     mock_fallback_enabled: bool
+    debug_enabled: bool
 
 
 class TimeSlotRead(BaseModel):
@@ -56,6 +57,32 @@ class VideoRecommendationRequest(BaseModel):
     workout_category_id: int = Field(gt=0)
 
 
+class VideoPlaybackFailure(BaseModel):
+    failed_video_id: str | None = None
+    reason: str | None = None
+
+
+class VideoPlaybackConfirmed(BaseModel):
+    youtube_video_id: str | None = None
+
+
+class BroadcastSessionCreate(BaseModel):
+    video_session_id: int = Field(gt=0)
+
+
+class BroadcastSessionRead(BaseModel):
+    video_session_id: int
+    time_slot_id: int
+    workout_category_id: int
+    started_at: datetime
+    server_time: datetime
+    playback_offset_seconds: int
+    duration_seconds: int | None
+    participant_count: int
+    exited_participant_count: int
+    status: str
+
+
 class FeedbackCreate(BaseModel):
     video_session_id: int = Field(gt=0)
     value: Literal["like", "dislike"]
@@ -85,6 +112,10 @@ class FeedbackSummaryRead(BaseModel):
 class ReservationCreate(BaseModel):
     time_slot_id: int = Field(gt=0)
     workout_category_id: int = Field(gt=0)
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
 
 
 class ReservationRead(BaseModel):

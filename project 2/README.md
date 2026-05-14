@@ -26,7 +26,7 @@ The project is designed to demonstrate AI-assisted full stack development, multi
 
 The first implementation target is a browser dashboard with the following user journey:
 
-1. A guest can reach the application but must register or sign in before accessing the dashboard or workout broadcast.
+1. A visitor can reach the landing page but must register or sign in before accessing the dashboard or workout broadcast.
 2. A member registers or signs in with name, email, age, and preferred workout slots.
 3. The member selects an hourly slot between 9am and 9pm, subject to a 20-member capacity limit.
 4. The AI workflow selects a safe, approximately 10-minute workout video for the active category.
@@ -43,7 +43,7 @@ Screenshots, GIFs, or a demo video will be added under `assets/screenshots/` as 
 
 - React for dashboard views and user interaction.
 - Vite for fast local development.
-- Browser-based UI for members, guests, and admins.
+- Browser-based UI for members and admins.
 
 ### Backend components:
 
@@ -93,7 +93,9 @@ Create environment configuration:
 cp .env.example .env
 ```
 
-Then fill in API keys when the AI and YouTube integrations are implemented.
+Then fill in API keys for YouTube and optional OpenAI use.
+
+Set `DEBUG=true` during local demos when you want `[FitHub AI]` diagnostic logs in the backend terminal and browser console. Set it to `false` when you want quieter output.
 
 By default, the AI reasoning path is configured for local Ollama:
 
@@ -120,30 +122,80 @@ Password hashing uses `passlib` with bcrypt. The project pins `bcrypt==4.0.1` to
 
 ## Usage
 
-Run the backend API:
+Start a new local demo session from the project root with two terminals.
+
+Terminal 1, backend API on port `8000`:
 
 ```bash
-uvicorn src.backend.app.main:app --reload
+./scripts/start_backend_local.sh
 ```
 
-Run the frontend dashboard:
+Terminal 2, React SPA on port `5173`:
 
 ```bash
-cd src/frontend
-npm run dev
+./scripts/start_frontend_local.sh
 ```
+
+Open the application:
+
+```text
+Local frontend SPA: http://127.0.0.1:5173/
+Local backend API docs: http://127.0.0.1:8000/docs
+Local backend health check: http://127.0.0.1:8000/health
+```
+
+For a LAN/VM demo that another computer can open, start both servers on `0.0.0.0`:
+
+```bash
+./scripts/start_backend_lan.sh
+```
+
+```bash
+./scripts/start_frontend_lan.sh
+```
+
+Then open the printed LAN URL from the host machine or another computer on the same reachable network:
+
+```text
+LAN frontend SPA: http://<VM_IP>:5173/
+LAN backend API docs: http://<VM_IP>:8000/docs
+LAN backend health check: http://<VM_IP>:8000/health
+```
+
+Use the actual VM IP address printed by the start scripts in place of `<VM_IP>`. For example:
+
+```text
+Frontend SPA: http://10.0.2.15:5173/
+Backend API docs: http://10.0.2.15:8000/docs
+```
+
+If `http://<VM_IP>:5173/` does not open from the host machine, check the VM network mode first. NAT addresses such as `10.0.2.15` are often reachable inside the VM but not directly reachable from the host or another computer. Use bridged networking, or configure VM port forwarding for ports `5173` and `8000`.
+
+External access from another computer was not tested in this development VM because NAT port forwarding was not configured. An evaluator should be able to connect from an external host if their VM or machine allows inbound access to ports `5173` and `8000`, the servers are started with the LAN scripts, and any firewall rules permit those ports.
+
+End the demo session by pressing `Ctrl+C` in both terminals. If a port is already in use, stop the old terminal session first, then rerun the command.
+
+Each start script stops the matching old dev server first. If the old terminal is no longer visible, you can also stop existing dev servers manually from the project root:
+
+```bash
+pkill -f uvicorn
+pkill -f vite
+```
+
+Then restart the backend and frontend scripts.
 
 Expected prototype behaviour:
 
-- Guests can access public status only; dashboard and broadcast data require login.
+- Visitors can access the landing page only; dashboard and broadcast data require login.
 - Members can register, sign in, reserve or cancel available slots, and submit video feedback.
 - Admins can monitor slot occupancy, review feedback, and override the selected video when required.
+- The browser client is a React single page application; member and admin workflows render inside the same app shell.
 
 Authentication and roles:
 
 - The backend uses JWT bearer tokens for the prototype API. JWTs are a good fit here because the React frontend can send a standard `Authorization: Bearer <token>` header without server-side session storage.
 - Member registration requires email so users can sign in again later. Email is validated with Pydantic `EmailStr` and the `email-validator` package.
-- Guest access remains separate from member registration and does not require email.
+- The earlier guest-preview UI was removed to keep the prototype flow focused on authenticated member and admin testing.
 - Roles are enforced in backend dependencies: member routes require a valid token, and admin routes require an admin token.
 
 Slot scheduling:
@@ -157,15 +209,44 @@ AI video recommendations:
 
 - The backend creates or returns a cached video session for each `time_slot + workout_category` pair.
 - Reserving a slot automatically ensures a video recommendation exists for that slot/category.
-- Ollama is the default LLM provider, OpenAI remains optional, and mock fallback keeps the demo working if no LLM or YouTube API is available.
+- When `YOUTUBE_API_KEY` exists, the backend searches YouTube with `videoEmbeddable=true` and stores a real embeddable video.
+- The recommender attempts a fresh embeddable YouTube search first, then falls back to a previously approved cached embeddable video, then uses mock fallback for no-key or no-network demos.
+- Fresh YouTube candidates are marked pending until the browser confirms playback through the YouTube IFrame Player API; only confirmed videos are reused as cached fallback videos.
+- Ollama is the default LLM provider, and OpenAI remains optional.
 - When provider settings are available, the recommendation service can request a short LiteLLM safety review before saving the video session.
 - Recommendation decisions are stored in `video_sessions` with provider, status, safety notes, and agent summary fields.
+
+Broadcast session sync:
+
+- Members join a backend-managed broadcast session before the fullscreen player opens.
+- The backend stores a shared session start time in runtime memory and returns a shared playback offset.
+- Late joiners start near the current shared offset instead of starting from the beginning.
+- Active clients poll the backend during playback and nudge the YouTube player toward the shared offset.
+- The frontend uses the YouTube IFrame Player API to detect playback start and YouTube player errors. If playback does not start within five seconds, the app asks the backend for a replacement candidate.
+- Members who exit a broadcast are blocked from rejoining that same runtime session.
 
 Feedback loop:
 
 - Logged-in members can submit `like` or `dislike` feedback for video sessions they reserved.
 - Repeated feedback updates the member's existing response for that video session.
 - Admins can view likes, dislikes, total feedback, and score per video session.
+
+Frontend dashboard:
+
+- The React/Vite SPA connects to the FastAPI backend at `http://127.0.0.1:8000`.
+- The first screen includes login/register controls and a workout hero visual inspired by the supplied mockup.
+- Member and admin views are role-aware after login.
+- The sign-in/register panel is placed in the hero on desktop and stacks below the hero copy on smaller screens.
+- The member slot selector includes a `Demo time slot` option for quick local demonstration.
+- The workout broadcast panel stays empty until an active broadcast starts; playback happens in the fullscreen/minimized broadcast player.
+
+Known limitations and unresolved issues:
+
+- Broadcast session state is stored in backend runtime memory for the prototype. Restarting the backend clears active broadcast sessions.
+- The broadcast sync loop is demo-grade. It periodically corrects playback offset, but it is not production-grade real-time streaming.
+- YouTube can still reject an embed at playback time even after `videoEmbeddable=true`; the prototype now attempts replacement, but availability still depends on YouTube/network access.
+- A separate long-term video cache table is deferred; the prototype uses `video_sessions.provider` and playback confirmation status for cached fallback decisions.
+- External host/LAN access was not tested in this development VM. It should work when the evaluator's VM or host has bridged networking or port forwarding configured for ports `5173` and `8000`.
 
 ---
 

@@ -13,7 +13,8 @@ Current status:
 - Phase 4: Complete
 - Phase 5: Complete
 - Phase 6: Complete
-- Next phase: Phase 7, Frontend Dashboard
+- Phase 7: Complete
+- Next phase: Phase 8, Testing, Demo, and Evaluation Readiness
 
 Completed so far:
 - Repository scaffold, evaluator-facing README, documentation, dependency files, and environment templates.
@@ -22,12 +23,15 @@ Completed so far:
 - Slot scheduling with member reserve/cancel endpoints, duplicate prevention, 20-member capacity enforcement, admin occupancy summary, and Phase 4 tests.
 - AI video recommendation workflow with cached `video_sessions`, provider-aware mock fallback, automatic recommendation creation after reservation, and Phase 5 tests.
 - Feedback loop with member like/dislike create/update, reservation validation, admin feedback summaries, and Phase 6 tests.
+- React single page application with auth entry, member dashboard, admin dashboard, backend API integration, and workout hero visual.
+- Runtime broadcast session sync with shared start time, playback offset, participant tracking, exit tracking, and Phase 7 broadcast tests.
+- YouTube IFrame Player API playback confirmation and failure replacement flow with backend cache confirmation.
 
 Next focus:
-- Connect React/Vite frontend to backend auth, scheduling, recommendations, and feedback APIs.
-- Replace static dashboard scaffold with usable member/admin workflows.
-- Keep guest access limited to entry/login.
-- Verify browser behavior manually and with focused frontend tests if practical.
+- End-to-end manual demo pass with backend and frontend running together.
+- Add screenshots or demo media under `assets/screenshots/`.
+- Final README/demo instructions polish.
+- Optional lightweight frontend tests if time permits.
 
 ## Phase 1: Repository Foundation
 
@@ -76,7 +80,7 @@ Testing note:
 ## Phase 3: Authentication and Roles
 
 Goals:
-- Support Member, Guest, and Admin flows.
+- Support Member and Admin flows.
 - Implement member registration with name, age, and preferred time slots.
 - Implement login for member/admin users.
 - Restrict admin features to admin users.
@@ -96,7 +100,7 @@ Implemented:
 - JWT bearer-token login for member and admin users.
 - Seeded local admin account for prototype evaluation.
 - Role guards for authenticated dashboard data and admin-only summary data.
-- Guest access limited to public status/auth routes; dashboard and broadcast data require login.
+- Visitor access is limited to public status/auth routes; dashboard and broadcast data require login.
 - Phase 3 ASGI tests covering registration, email validation, login, current-user lookup, admin access, member restriction, and guest restriction.
 
 Security rationale:
@@ -194,18 +198,42 @@ Implemented:
 ## Phase 7: Frontend Dashboard
 
 Goals:
-- Build a browser dashboard for guest, member, and admin use.
+- Build a browser dashboard for visitor landing, member, and admin use.
 - Keep the first screen as the usable application, not a landing page.
 - Connect React/Vite frontend to backend APIs.
 
 Deliverables:
-- Guest entry/login view.
+- Public landing and authenticated login/register entry view.
 - Authenticated broadcast view.
 - Member registration/login views.
 - Slot reservation UI.
 - Video broadcast panel.
 - Like/dislike feedback controls.
 - Admin occupancy and override views.
+
+Status: Complete.
+
+Implemented:
+- React/Vite SPA in `src/frontend/src/main.tsx`; no multi-page routing is required for the prototype.
+- Hero/entry experience inspired by the supplied fitness mockup, using the supplied workout image as the primary visual asset.
+- Login/register flow with JWT stored in browser local storage for prototype use.
+- Member dashboard connected to backend APIs for slots, categories, reservations, video sessions, and feedback.
+- Admin dashboard connected to occupancy and feedback summary APIs.
+- Desktop auth layout places the sign-in/register panel on the right side of the hero, with vertically stacked fields.
+- `Demo time slot` option in the member slot selector supports a quick demo reservation.
+- Workout broadcast panel embeds YouTube playback for recommended video sessions.
+- Local FastAPI CORS configuration for Vite development on `127.0.0.1:5173`.
+- Frontend build verification with `npm --prefix src/frontend run build`.
+- Runtime broadcast-session sync: backend tracks shared start time and clients use a shared offset so late joiners do not start at the beginning.
+- Broadcast panel remains empty until a session starts; playback is loaded only in the fullscreen/minimized broadcast player.
+- YouTube IFrame Player API confirms playback, reports player errors, and triggers a backend replacement video if playback does not begin within five seconds.
+- Fresh YouTube candidates are marked pending until playback is confirmed, so cached fallback uses browser-confirmed playable videos.
+- Guest-preview UI was removed to keep the demo flow focused on authenticated member/admin testing.
+
+Current limitations:
+- Broadcast session state is stored in backend memory. Restarting the backend clears active sessions.
+- Sync is prototype-grade and offset-based; it is not a production streaming service.
+- YouTube recovery still depends on browser network access to the YouTube IFrame Player API and availability of alternate candidates.
 
 ## Phase 8: Testing, Demo, and Evaluation Readiness
 

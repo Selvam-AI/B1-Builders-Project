@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.backend.app.core.config import settings
 from src.backend.app.core.database import get_db
 from src.backend.app.core.security import get_current_user, require_admin, require_member
-from src.backend.app.models import SlotSignup, TimeSlot, User, VideoSession, WorkoutCategory
+from src.backend.app.models import Feedback, SlotSignup, TimeSlot, User, VideoSession, WorkoutCategory
 from src.backend.app.schemas import (
     ApiStatus,
+    BroadcastSessionCreate,
+    BroadcastSessionRead,
     FeedbackCreate,
     FeedbackRead,
     FeedbackSummaryRead,
@@ -19,13 +21,26 @@ from src.backend.app.schemas import (
     TimeSlotRead,
     TokenResponse,
     UserRead,
+    UserStatusUpdate,
+    VideoPlaybackConfirmed,
+    VideoPlaybackFailure,
     VideoRecommendationRequest,
     VideoSessionRead,
     WorkoutCategoryRead,
 )
 from src.backend.app.services.auth import authenticate_user, create_member, issue_token, serialize_user
+from src.backend.app.services.broadcasts import (
+    exit_broadcast,
+    get_member_video_session,
+    read_broadcast,
+    start_or_join_broadcast,
+)
 from src.backend.app.services.feedback import create_or_update_feedback, list_feedback_summaries
-from src.backend.app.services.recommendations import get_or_create_video_recommendation
+from src.backend.app.services.recommendations import (
+    confirm_video_playback,
+    get_or_create_video_recommendation,
+    replace_failed_video_recommendation,
+)
 from src.backend.app.services.scheduling import (
     cancel_reservation,
     create_reservation,
@@ -45,6 +60,7 @@ async def api_status() -> ApiStatus:
         ai_llm_provider=settings.ai_llm_provider,
         ai_recommender_mode=settings.ai_recommender_mode,
         mock_fallback_enabled=settings.ai_allow_mock_fallback,
+        debug_enabled=settings.debug,
     )
 
 
@@ -100,6 +116,56 @@ async def admin_feedback_summary(
     return list_feedback_summaries(db)
 
 
+@router.get("/admin/users", response_model=list[UserRead])
+async def admin_users(
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> list[UserRead]:
+    users = db.scalars(
+        select(User).where(User.role != "admin").order_by(User.created_at.desc(), User.id.desc())
+    ).all()
+    return [serialize_user(user) for user in users]
+
+
+@router.patch("/admin/users/{user_id}/status", response_model=UserRead)
+async def admin_update_user_status(
+    user_id: int,
+    payload: UserStatusUpdate,
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> UserRead:
+    user = db.get(User, user_id)
+    if user is None or user.role == "admin":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member account was not found.",
+        )
+
+    user.is_active = payload.is_active
+    db.commit()
+    db.refresh(user)
+    return serialize_user(user)
+
+
+@router.delete("/admin/users/{user_id}", status_code=204)
+async def admin_delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> None:
+    user = db.get(User, user_id)
+    if user is None or user.role == "admin":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member account was not found.",
+        )
+
+    db.query(Feedback).filter(Feedback.user_id == user.id).delete(synchronize_session=False)
+    db.query(SlotSignup).filter(SlotSignup.user_id == user.id).delete(synchronize_session=False)
+    db.delete(user)
+    db.commit()
+
+
 @router.post("/reservations", response_model=ReservationRead, status_code=201)
 async def reserve_slot(
     payload: ReservationCreate,
@@ -148,6 +214,60 @@ async def recommend_video_session(
         payload.time_slot_id,
         payload.workout_category_id,
     )
+
+
+@router.post("/video-sessions/{video_session_id}/replace", response_model=VideoSessionRead)
+async def replace_video_session(
+    video_session_id: int,
+    payload: VideoPlaybackFailure,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> VideoSession:
+    video_session = get_member_video_session(db, current_member, video_session_id)
+    return replace_failed_video_recommendation(
+        db,
+        video_session,
+        failed_video_id=payload.failed_video_id,
+        reason=payload.reason,
+    )
+
+
+@router.post("/video-sessions/{video_session_id}/playable", response_model=VideoSessionRead)
+async def confirm_video_session_playback(
+    video_session_id: int,
+    payload: VideoPlaybackConfirmed,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> VideoSession:
+    video_session = get_member_video_session(db, current_member, video_session_id)
+    return confirm_video_playback(db, video_session, payload.youtube_video_id)
+
+
+@router.post("/broadcast-sessions/start", response_model=BroadcastSessionRead)
+async def start_broadcast_session(
+    payload: BroadcastSessionCreate,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> BroadcastSessionRead:
+    return start_or_join_broadcast(db, current_member, payload.video_session_id)
+
+
+@router.get("/broadcast-sessions/{video_session_id}", response_model=BroadcastSessionRead)
+async def get_broadcast_session(
+    video_session_id: int,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> BroadcastSessionRead:
+    return read_broadcast(db, current_member, video_session_id)
+
+
+@router.post("/broadcast-sessions/{video_session_id}/exit", response_model=BroadcastSessionRead)
+async def exit_broadcast_session(
+    video_session_id: int,
+    db: Session = Depends(get_db),
+    current_member: User = Depends(require_member),
+) -> BroadcastSessionRead:
+    return exit_broadcast(db, current_member, video_session_id)
 
 
 @router.get("/time-slots", response_model=list[TimeSlotRead])

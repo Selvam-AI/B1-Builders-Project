@@ -74,6 +74,14 @@ AI_RECOMMENDER_MODE=mock
 AI_ALLOW_MOCK_FALLBACK=true
 ```
 
+Enable diagnostic logging during development with:
+
+```bash
+DEBUG=true
+```
+
+When enabled, the backend prints `[FitHub AI]` recommendation decisions in the Uvicorn terminal, and the frontend prints matching browser-console diagnostics after reading `/api/status`.
+
 ## Frontend Packages
 
 Installed through `src/frontend/package.json`:
