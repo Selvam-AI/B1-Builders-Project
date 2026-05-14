@@ -16,7 +16,7 @@ The project is designed to demonstrate AI-assisted full stack development, multi
 
 ### Outcome
 
-- Planned prototype for member registration, login, time-slot reservation, public workout broadcast, feedback, and admin monitoring.
+- Planned prototype for member registration, login, time-slot reservation, authenticated workout broadcast, feedback, and admin monitoring.
 - AI workflow design using CrewAI-style agents for training video selection, safety review, scheduling, and admin summaries.
 - Scaffolded repository ready for incremental implementation with React/Vite frontend, FastAPI backend, SQLite persistence, and SQLAlchemy models.
 
@@ -26,8 +26,8 @@ The project is designed to demonstrate AI-assisted full stack development, multi
 
 The first implementation target is a browser dashboard with the following user journey:
 
-1. A guest opens the dashboard and can view the current public workout broadcast.
-2. A member registers or signs in with name, age, and preferred workout slots.
+1. A guest can reach the application but must register or sign in before accessing the dashboard or workout broadcast.
+2. A member registers or signs in with name, email, age, and preferred workout slots.
 3. The member selects an hourly slot between 9am and 9pm, subject to a 20-member capacity limit.
 4. The AI workflow selects a safe, approximately 10-minute workout video for the active category.
 5. Members like or dislike the video after the session.
@@ -105,6 +105,17 @@ BASE_URL=http://localhost:11434
 
 OpenAI can be enabled later by changing `AI_LLM_PROVIDER`, `MODEL`, and `OPENAI_API_KEY`.
 
+Default local admin account:
+
+```text
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
+```
+
+This account is seeded only when `SEED_ADMIN=true` and is intended for local prototype evaluation. In production, set `SEED_ADMIN=false`, do not use the default password, and provision admin users through a secure operational process.
+
+Password hashing uses `passlib` with bcrypt. The project pins `bcrypt==4.0.1` to avoid bcrypt 5.x compatibility issues with `passlib`.
+
 ---
 
 ## Usage
@@ -124,9 +135,16 @@ npm run dev
 
 Expected prototype behaviour:
 
-- Guests can view public broadcast information.
+- Guests can access public status only; dashboard and broadcast data require login.
 - Members can register, sign in, reserve available slots, and submit video feedback.
 - Admins can monitor slot occupancy, review feedback, and override the selected video when required.
+
+Authentication and roles:
+
+- The backend uses JWT bearer tokens for the prototype API. JWTs are a good fit here because the React frontend can send a standard `Authorization: Bearer <token>` header without server-side session storage.
+- Member registration requires email so users can sign in again later. Email is validated with Pydantic `EmailStr` and the `email-validator` package.
+- Guest access remains separate from member registration and does not require email.
+- Roles are enforced in backend dependencies: member routes require a valid token, and admin routes require an admin token.
 
 ---
 
@@ -166,6 +184,12 @@ project 2/
 - `scripts/` contains automation and developer utilities.
 - `assets/` stores screenshots, demo media, and visual assets.
 - `data/` stores local SQLite data or seed files for the prototype.
+
+Initialize the local SQLite schema and seed data without starting the API:
+
+```bash
+.venv/bin/python scripts/init_db.py
+```
 
 ---
 

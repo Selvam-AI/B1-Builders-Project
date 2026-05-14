@@ -4,6 +4,25 @@
 
 This plan breaks Project 2 into implementation phases for a small, demonstrable full stack browser dashboard that matches the B1 Builders Programme requirements and the FitHub AI project specification.
 
+## Implementation Progress
+
+Current status:
+- Phase 1: Complete
+- Phase 2: Complete
+- Phase 3: Complete
+- Next phase: Phase 4, Slot Scheduling
+
+Completed so far:
+- Repository scaffold, evaluator-facing README, documentation, dependency files, and environment templates.
+- Backend core with FastAPI, SQLAlchemy, SQLite setup, project models, seed data, core read APIs, DB init script, and Phase 2 tests.
+- Authentication and role handling with JWT bearer tokens, validated member email, seeded local admin, protected dashboard/broadcast routes, and Phase 3 tests.
+
+Next focus:
+- Slot reservation create/cancel endpoints.
+- Capacity enforcement for 20 signed-in members per hourly slot.
+- Duplicate reservation prevention.
+- Admin occupancy visibility.
+
 ## Phase 1: Repository Foundation
 
 Goals:
@@ -16,6 +35,8 @@ Deliverables:
 - Top-level scaffold: `README.md`, `LICENSE`, `.gitignore`, `requirements.txt`, `package.json`, `src/`, `tests/`, `docs/`, `scripts/`, `assets/`, `data/`.
 - Backend and frontend starter files.
 - Initial implementation plan and prompt log.
+
+Status: Complete.
 
 ## Phase 2: Backend Core
 
@@ -31,6 +52,21 @@ Deliverables:
 - API health and status endpoints.
 - Unit tests for basic backend setup.
 
+Status: Complete.
+
+Implemented:
+- SQLAlchemy database engine, session dependency, and table initialization.
+- ORM models for `users`, `time_slots`, `slot_signups`, `workout_categories`, `video_sessions`, and `feedback`.
+- Seed data for hourly slots from 9am-9pm and Upper Body / Lower Body categories.
+- Startup database initialization and seed flow.
+- Local database initialization script at `scripts/init_db.py`.
+- Backend read APIs for status, time slots, workout categories, and video sessions.
+- Phase 2 ASGI HTTP tests covering status, seeded slots, seeded categories, and empty video-session state.
+
+Testing note:
+- Starlette `TestClient` hangs in this sandbox because its AnyIO cross-thread portal does not complete.
+- Backend route tests use `httpx.ASGITransport` instead, which still exercises the FastAPI app through ASGI without relying on the broken threaded test path.
+
 ## Phase 3: Authentication and Roles
 
 Goals:
@@ -44,6 +80,23 @@ Deliverables:
 - Password hashing for local prototype accounts.
 - Role-based endpoint guards.
 - Tests for registration, login, and role restrictions.
+
+Status: Complete.
+
+Implemented:
+- Member registration with name, age, required email, password, and preferred time slots.
+- Email validation using Pydantic `EmailStr` backed by `email-validator`.
+- Password hashing with `passlib[bcrypt]`.
+- JWT bearer-token login for member and admin users.
+- Seeded local admin account for prototype evaluation.
+- Role guards for authenticated dashboard data and admin-only summary data.
+- Guest access limited to public status/auth routes; dashboard and broadcast data require login.
+- Phase 3 ASGI tests covering registration, email validation, login, current-user lookup, admin access, member restriction, and guest restriction.
+
+Security rationale:
+- JWT bearer tokens are used because they are simple for a React/FastAPI prototype and avoid server-side session storage.
+- This is demo-appropriate security, not production-ready identity management.
+- In production, seeded admin accounts should be disabled with `SEED_ADMIN=false`; admins should be provisioned securely, secrets should be rotated, HTTPS should be required, and password reset / email verification / audit logging should be added.
 
 ## Phase 4: Slot Scheduling
 
@@ -109,7 +162,8 @@ Goals:
 - Connect React/Vite frontend to backend APIs.
 
 Deliverables:
-- Guest broadcast view.
+- Guest entry/login view.
+- Authenticated broadcast view.
 - Member registration/login views.
 - Slot reservation UI.
 - Video broadcast panel.

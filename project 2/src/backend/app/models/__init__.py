@@ -1,6 +1,20 @@
-"""SQLAlchemy model package.
+"""SQLAlchemy model package."""
 
-Planned tables: users, time_slots, slot_signups, workout_categories,
-video_sessions, and feedback.
-"""
+from src.backend.app.models.entities import (
+    Feedback,
+    SlotSignup,
+    TimeSlot,
+    User,
+    VideoSession,
+    WorkoutCategory,
+)
+
+__all__ = [
+    "Feedback",
+    "SlotSignup",
+    "TimeSlot",
+    "User",
+    "VideoSession",
+    "WorkoutCategory",
+]
 

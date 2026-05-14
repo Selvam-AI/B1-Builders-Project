@@ -108,3 +108,14 @@ CREWAI_TRACING_ENABLED=false
 ```
 
 LiteLLM is pinned at `1.82.6` because newer `1.83.x` releases conflict with the installed CrewAI/OpenAI dependency combination.
+
+## Local Admin Account
+
+The development seed flow creates one local admin account when `SEED_ADMIN=true`:
+
+```text
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
+```
+
+This is for prototype evaluation only. For production-style deployment, set `SEED_ADMIN=false` and create admin users through a secure provisioning process.

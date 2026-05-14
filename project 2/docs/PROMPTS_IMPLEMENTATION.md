@@ -193,3 +193,152 @@ CrewAI needed workspace-local storage configuration in this restricted environme
 - Confirmed users should not interact directly with CrewAI.
 - Confirmed normal user actions should read stored/cached state instead of waiting for LLM calls.
 - Identified the next implementation unit as the backend AI service wrapper with provider switching and mock fallback.
+
+## Prompt 7
+
+### User Prompt
+
+> I accept recommendations 1. to 4. Complete pending in Phase 1 and Phase 2
+
+### Decision Made
+
+- Accepted the recommended AI behaviour:
+  - Ollama-first real LLM mode.
+  - Mock fallback enabled for demo safety.
+  - Generate/cache recommendations by `slot + category`.
+  - Keep LLM reasoning limited to video recommendation and safety review.
+
+### Implementation Summary
+
+- Completed Phase 1 documentation/scaffold cleanup.
+- Completed Phase 2 backend core.
+- Added SQLAlchemy database setup and session handling.
+- Added ORM models for all project-specified tables.
+- Added seed data for 9am-9pm hourly slots and Upper Body / Lower Body categories.
+- Added backend status, time-slot, workout-category, and video-session read endpoints.
+- Added `scripts/init_db.py` for local schema creation and seed setup.
+- Added focused backend tests for Phase 2 core behaviour.
+
+### Debug / Verification
+
+- FastAPI `TestClient` hung in this environment, so tests were later adjusted to use `httpx.ASGITransport` for HTTP-style ASGI testing.
+- Backend tests pass with `4 passed`.
+
+## Prompt 8
+
+### User Prompt
+
+> 1.
+
+### Context
+
+The user chose option 1 from the previous recommendation: investigate and resolve the FastAPI `TestClient` issue before progressing into Phase 3.
+
+### Debug Summary
+
+- Reproduced the hang with a minimal FastAPI app, confirming the issue was not caused by this project's database, lifespan, or route code.
+- The hang occurs inside Starlette `TestClient` through AnyIO's cross-thread portal.
+- Downgrading Starlette from `1.0.0` to `0.52.1` and AnyIO from `4.13.0` to `4.9.0` did not make `TestClient` usable in this sandbox.
+- `httpx.ASGITransport` works for async ASGI app testing and avoids the broken threaded portal.
+
+### Implementation Summary
+
+- Pinned `starlette==0.52.1` and `anyio==4.9.0` for a more stable FastAPI test/runtime stack.
+- Converted current backend route handlers and database dependency to async-compatible definitions.
+- Reworked Phase 2 tests to use `httpx.ASGITransport` for HTTP-style ASGI tests instead of Starlette `TestClient`.
+- Verified backend tests pass and `pip check` reports no broken requirements.
+
+## Prompt 9
+
+### User Prompt
+
+> do you validate email? how? If not validate, then we could keep it for future improvements.  guess access not permit dashboard/broadcast without login. yes to seed one local admin account. But what happens to it in production?  Update default admin account email and password in README.md. What it Token style, I think I am not concerned with it, choose what is best suited but document it with rationale. Member registration keep email optional. yes to Role handling.Yes to keep prototype security demo-appropriate. And yes to rest of prototype security level. Go ahead with next phase.
+
+### Decision Summary
+
+- Member email initially remained optional during registration; this was later superseded in Prompt 12 so member registration supports future login.
+- If email is provided, it is validated with Pydantic `EmailStr` and `email-validator`.
+- Dashboard and broadcast data require login; guests are limited to public status/auth routes.
+- One local admin account is seeded for prototype evaluation.
+- JWT bearer tokens are used for the prototype because they are simple for React/FastAPI API calls and avoid server-side sessions.
+- Security remains demo-appropriate, with production hardening documented as future work.
+
+### Implementation Summary
+
+- Added auth schemas, security helpers, auth service functions, and seeded admin support.
+- Added member registration, login, current-user, and admin-summary endpoints.
+- Protected dashboard/broadcast data routes with authenticated-user guards.
+- Added role-based admin restrictions.
+- Updated README, installation notes, and the implementation plan with admin credentials, token rationale, email validation behaviour, and production notes.
+- Added Phase 3 tests for registration, email validation, login, admin access, member restriction, and guest restriction.
+- Superseded by Prompt 12: member registration now requires email.
+
+### Debug / Refinement
+
+- Changed the default admin email to `admin@example.com` because `.local` domains can fail strict email validation.
+- Pinned `bcrypt==4.0.1` because newer bcrypt releases removed metadata that `passlib` expects, causing noisy startup warnings.
+
+## Prompt 10
+
+### User Prompt
+
+> update Default local admin information README.md. Regarding harmless passlib deprecation warning, did you  install bcrypt version 4.x, not 5.x. Example dependency: bcrypt<5
+> passlib ? My Codex message says rate limit resets on 5:31 pm, does this mean you won't be able to process this prompt?
+
+### Response / Implementation Summary
+
+- Confirmed the local environment uses `bcrypt 4.0.1` and `passlib 1.7.4`; bcrypt 5.x is not installed.
+- Kept the stricter dependency pin `bcrypt==4.0.1` because it avoids compatibility warnings better than the broader `bcrypt<5` range.
+- Updated README default local admin information to show the seeded environment variables, prototype-only warning, and bcrypt/passlib note.
+- Clarified that the Codex rate-limit message is an account/product quota notice, not a blocker for the current processed prompt.
+
+## Prompt 11
+
+### User Prompt
+
+> what are pending unresolved issues? what decision are pending to move to next phase?
+
+### Response Summary
+
+- Reviewed implementation plan, README, prompt log, and current worktree state.
+- Identified no blocking unresolved issue for moving into Phase 4.
+- Listed known non-blocking technical notes and the small Phase 4 decisions needed before implementation.
+
+## Prompt 12
+
+### User Prompt
+
+> Decision regarding unresolved issue:
+> Proceed to Phase 4. Authentication is acceptable for prototype use.
+>
+> Resolved:
+> - Default admin email changed to admin@example.com.
+> - bcrypt pinned to 4.0.1.
+> - TestClient replaced by httpx.ASGITransport.
+>
+> Accepted limitations:
+> - passlib Python 3.12 warning is non-blocking.
+> - Production-grade auth features are deferred.
+> - Member registration will require email to support future login.
+> - Guest access remains separate and does not require email.
+>
+> Worktree has many Phase 1-3 changes, commit it. Will resolve pending decisions for Phase 4 in next prompt.
+
+### Decision / Implementation Summary
+
+- Recorded Phase 3 authentication as acceptable for prototype use.
+- Updated member registration to require email while keeping guest access separate.
+- Kept accepted limitations documented: passlib warning is non-blocking and production-grade auth is deferred.
+- Prepared the Phase 1-3 worktree for commit after verification.
+
+## Prompt 13
+
+### User Prompt
+
+> my last git commit : commit e5501f3b8e526967e5858e56298edb89e03e9ef1 , if this true, continue wtih git commit and push.
+
+### Response / Implementation Summary
+
+- Verified `e5501f3b8e526967e5858e56298edb89e03e9ef1` is the current `HEAD`.
+- Confirmed Phase 1-3 changes were staged on `main`.
+- Proceeded with commit and push workflow.
