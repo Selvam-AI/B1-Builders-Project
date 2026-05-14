@@ -2,7 +2,11 @@
 
 from src.backend.app.schemas.core import (
     ApiStatus,
+    OccupancyRead,
+    ReservationCreate,
+    ReservationRead,
     TimeSlotRead,
+    VideoRecommendationRequest,
     VideoSessionRead,
     WorkoutCategoryRead,
 )
@@ -12,7 +16,11 @@ __all__ = [
     "ApiStatus",
     "LoginRequest",
     "MemberRegister",
+    "OccupancyRead",
+    "ReservationCreate",
+    "ReservationRead",
     "TimeSlotRead",
+    "VideoRecommendationRequest",
     "TokenResponse",
     "UserRead",
     "VideoSessionRead",

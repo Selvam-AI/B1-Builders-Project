@@ -342,3 +342,33 @@ The user chose option 1 from the previous recommendation: investigate and resolv
 - Verified `e5501f3b8e526967e5858e56298edb89e03e9ef1` is the current `HEAD`.
 - Confirmed Phase 1-3 changes were staged on `main`.
 - Proceeded with commit and push workflow.
+
+## Prompt 14
+
+### User Prompt
+
+> I agree with suggested Phase 4 default: implement reserve/cancel endpoints, enforce 20-member capacity, prevent duplicate reservations for the same member and slot, and add admin occupancy summary. Continue
+
+### Decision / Implementation Summary
+
+- Implemented Phase 4 slot scheduling using deterministic backend/database rules.
+- Added member reservation create, list, and cancel endpoints.
+- Added admin occupancy summary endpoint.
+- Enforced one reservation per member per time slot.
+- Enforced slot capacity using the seeded capacity value, defaulting to 20.
+- Added Phase 4 tests for reserve/cancel, duplicate prevention, capacity rejection, admin occupancy, and member/admin access control.
+
+## Prompt 15
+
+### User Prompt
+
+> If the unresolved issues do not obstruct next phase, keep moving. git commit after phase 5 implementation. I agree with suggestion for phase 5. proceed.
+
+### Decision / Implementation Summary
+
+- Proceeded to Phase 5 because the remaining issues were non-blocking.
+- Implemented cached video recommendation creation through `video_sessions`.
+- Added provider-aware recommendation service with a LiteLLM review hook and mock fallback for demo reliability.
+- Added direct recommendation endpoint and automatic recommendation creation after reservation.
+- Added tests for recommendation creation, cache reuse, reservation-triggered creation, and guest access restriction.
+- Prepared to commit after Phase 5 verification.

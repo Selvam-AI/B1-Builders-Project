@@ -10,18 +10,22 @@ Current status:
 - Phase 1: Complete
 - Phase 2: Complete
 - Phase 3: Complete
-- Next phase: Phase 4, Slot Scheduling
+- Phase 4: Complete
+- Phase 5: Complete
+- Next phase: Phase 6, Feedback Loop
 
 Completed so far:
 - Repository scaffold, evaluator-facing README, documentation, dependency files, and environment templates.
 - Backend core with FastAPI, SQLAlchemy, SQLite setup, project models, seed data, core read APIs, DB init script, and Phase 2 tests.
 - Authentication and role handling with JWT bearer tokens, validated member email, seeded local admin, protected dashboard/broadcast routes, and Phase 3 tests.
+- Slot scheduling with member reserve/cancel endpoints, duplicate prevention, 20-member capacity enforcement, admin occupancy summary, and Phase 4 tests.
+- AI video recommendation workflow with cached `video_sessions`, provider-aware mock fallback, automatic recommendation creation after reservation, and Phase 5 tests.
 
 Next focus:
-- Slot reservation create/cancel endpoints.
-- Capacity enforcement for 20 signed-in members per hourly slot.
-- Duplicate reservation prevention.
-- Admin occupancy visibility.
+- Feedback endpoints for like/dislike responses.
+- One feedback record per member and video session.
+- Admin feedback summary.
+- Recommendation scoring signal for later Trainer Agent decisions.
 
 ## Phase 1: Repository Foundation
 
@@ -113,6 +117,17 @@ Deliverables:
 - Admin occupancy endpoint.
 - Tests for capacity and duplicate reservation rules.
 
+Status: Complete.
+
+Implemented:
+- `POST /api/reservations` for authenticated members to reserve a time slot and workout category.
+- `GET /api/reservations/me` for authenticated members to view their reservations.
+- `DELETE /api/reservations/{reservation_id}` for authenticated members to cancel their own reservations.
+- `GET /api/admin/occupancy` for admins to view slot occupancy, remaining capacity, and full-slot status.
+- Duplicate reservation prevention for the same member and time slot.
+- Capacity enforcement using deterministic database counts; LLM agents are not involved in scheduling.
+- Phase 4 ASGI tests covering reserve, cancel, duplicate rejection, full-slot rejection, admin occupancy, and member restriction.
+
 ## Phase 5: AI Video Recommendation Workflow
 
 Goals:
@@ -130,6 +145,16 @@ Deliverables:
 - Safety validation step.
 - Video session persistence.
 - Fallback mock/rule-based recommender mode for demos when no LLM is available.
+
+Status: Complete.
+
+Implemented:
+- `POST /api/video-sessions/recommend` to create or return a cached video session for a time slot and workout category.
+- Automatic recommendation creation when a member reserves a slot/category pair for the first time.
+- Cached reuse by `time_slot + workout_category` so normal dashboard reads do not trigger repeated AI work.
+- Provider-aware recommendation service that respects Ollama/OpenAI/mock configuration, can request a short LiteLLM safety review, and falls back to mock video metadata when YouTube/LLM work is unavailable.
+- Mock Trainer/Safety output stored in `video_sessions` as `agent_summary`, `safety_notes`, `provider`, and `status`.
+- Phase 5 ASGI tests covering recommendation creation, cache reuse, reservation-triggered creation, and guest restriction.
 
 Workflow rules:
 - User actions remain simple: register/login, choose slot, choose workout category, view broadcast, and submit feedback.

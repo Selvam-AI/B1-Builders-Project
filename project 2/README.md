@@ -136,7 +136,7 @@ npm run dev
 Expected prototype behaviour:
 
 - Guests can access public status only; dashboard and broadcast data require login.
-- Members can register, sign in, reserve available slots, and submit video feedback.
+- Members can register, sign in, reserve or cancel available slots, and submit video feedback.
 - Admins can monitor slot occupancy, review feedback, and override the selected video when required.
 
 Authentication and roles:
@@ -145,6 +145,21 @@ Authentication and roles:
 - Member registration requires email so users can sign in again later. Email is validated with Pydantic `EmailStr` and the `email-validator` package.
 - Guest access remains separate from member registration and does not require email.
 - Roles are enforced in backend dependencies: member routes require a valid token, and admin routes require an admin token.
+
+Slot scheduling:
+
+- Hourly slots run from 9am to 9pm with a maximum capacity of 20 members per slot.
+- Members cannot reserve the same slot more than once.
+- A full slot returns a clear API conflict response instead of overbooking.
+- Slot scheduling uses deterministic database logic, not LLM reasoning.
+
+AI video recommendations:
+
+- The backend creates or returns a cached video session for each `time_slot + workout_category` pair.
+- Reserving a slot automatically ensures a video recommendation exists for that slot/category.
+- Ollama is the default LLM provider, OpenAI remains optional, and mock fallback keeps the demo working if no LLM or YouTube API is available.
+- When provider settings are available, the recommendation service can request a short LiteLLM safety review before saving the video session.
+- Recommendation decisions are stored in `video_sessions` with provider, status, safety notes, and agent summary fields.
 
 ---
 

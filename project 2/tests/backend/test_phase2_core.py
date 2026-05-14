@@ -50,7 +50,7 @@ def test_status_reports_current_backend_phase() -> None:
     payload = asyncio.run(get_json("/api/status"))
 
     assert payload["status"] == "ok"
-    assert payload["phase"] == "phase-3-authentication-and-roles"
+    assert payload["phase"] == "phase-5-ai-video-recommendations"
     assert payload["ai_llm_provider"] == "ollama"
     assert payload["mock_fallback_enabled"] is True
 

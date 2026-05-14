@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ApiStatus(BaseModel):
@@ -47,3 +49,33 @@ class VideoSessionRead(BaseModel):
     safety_notes: str | None
     agent_summary: str | None
 
+
+class VideoRecommendationRequest(BaseModel):
+    time_slot_id: int = Field(gt=0)
+    workout_category_id: int = Field(gt=0)
+
+
+class ReservationCreate(BaseModel):
+    time_slot_id: int = Field(gt=0)
+    workout_category_id: int = Field(gt=0)
+
+
+class ReservationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    time_slot_id: int
+    workout_category_id: int
+    created_at: datetime
+
+
+class OccupancyRead(BaseModel):
+    time_slot_id: int
+    label: str
+    start_hour: int
+    end_hour: int
+    capacity: int
+    current_occupancy: int
+    remaining_capacity: int
+    is_full: bool
