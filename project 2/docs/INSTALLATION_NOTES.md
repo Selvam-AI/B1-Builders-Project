@@ -59,14 +59,6 @@ curl http://127.0.0.1:11434/api/tags
 
 CPU-only mode is acceptable for optional summaries, but responses can be slow. The video curator and scheduling rules are deterministic and do not require Ollama.
 
-OpenAI remains optional. To switch later, set:
-
-```bash
-AI_LLM_PROVIDER=openai
-MODEL=openai/gpt-4o-mini
-OPENAI_API_KEY=your_key_here
-```
-
 If no LLM is available during a demo, use the mock/rule-based recommender fallback:
 
 ```bash

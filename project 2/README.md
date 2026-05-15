@@ -4,36 +4,49 @@ Deterministic social workout club portal for team and organisational use, with o
 
 ## Overview
 
+The project is designed to demonstrate AI-assisted development practice, multi-user shared-resource coordination, prompt-driven planning, and deterministic backend services.
+
 FitHub AI is Project 2 for the B1 Builders Programme: a full stack browser dashboard prototype where members reserve hourly workout slots, join shared workout sessions, watch curated workout videos, and give feedback that improves later recommendations.
 
-The project is designed to demonstrate AI-assisted development practice, multi-user shared-resource coordination, prompt-driven planning, and deterministic backend services.
 
 ### Problem
 
-- Team workout groups, student clubs, and small organisations need a simple way to coordinate shared workout sessions without exceeding room, network, or facilitator capacity.
-- Manual video selection can be inconsistent, too intense for general users, or unrelated to the session category.
-- Admins need visibility into slot occupancy, selected videos, and feedback without managing the session manually.
+The main motivation for this project was not to solve a real commercial problem, but to continue exploring AI-assisted development practices from Project 1. A major focus was experimenting with a service-oriented design using CrewAI-style agents for different application responsibilities, alongside structured prompting, deterministic backend behaviour, and coordinated full stack development.
+
+To support this learning objective, the project introduces an imagined workout-session platform.
+
+Users can select a workout category and reserve a scheduled exercise slot. When the scheduled time arrives, the workout session begins automatically in the browser, allowing users to exercise from home.
+
+A key feature of the prototype is synchronized playback. If a participant joins a session late, the video starts from the current shared playback position so all participants remain in the same live session.
+
+The rest of the platform focuses on standard member, reservation, feedback, and admin-management features.
 
 ### Outcome
 
-- Planned prototype for member registration, login, time-slot reservation, authenticated workout broadcast, feedback, and admin monitoring.
-- Deterministic video-curation workflow for training video selection, playback confirmation, cache rotation, scheduling, and admin summaries.
-- Scaffolded repository ready for incremental implementation with React/Vite frontend, FastAPI backend, SQLite persistence, and SQLAlchemy models.
+- Built a full stack prototype for scheduled shared workout sessions with synchronized browser playback.
+- Explored AI-assisted development practices, structured prompting, and service-oriented application design.
+- Initially planned to use CrewAI-style agents for different services, especially video curation and recommendation workflows.
+- During implementation, deterministic backend logic proved more practical for the prototype because video selection could be handled reliably using YouTube filters, playback confirmation, cache rotation, play-count rules, and feedback scores.
+- Deterministic behaviour also made the system easier to explain, test, and demonstrate consistently within a CPU-only VM environment.
+- CrewAI and optional LLM summaries remain possible future extensions for safety review or recommendation summaries rather than core playback logic.
 
 ---
 
 ## Demo
 
-The first implementation target is a browser dashboard with the following user journey:
+Most user interactions follow standard browser dashboard behaviour such as registration, sign-in, reservations, feedback, and admin management.
 
-1. A visitor can reach the landing page but must register or sign in before accessing the dashboard or workout broadcast.
-2. A member registers or signs in with name, email, age, and preferred workout slots.
-3. The member selects an hourly slot between 9am and 9pm, subject to a 20-member capacity limit.
-4. The video curator selects a safe, approximately 10-minute workout video for the active category.
-5. Members like or dislike the video after the session.
-6. An admin views slot occupancy, active video sessions, and feedback summaries.
+The main feature to observe is the synchronized workout session behaviour.
 
-Screenshots, GIFs, or a demo video will be added under `assets/screenshots/` as the UI is implemented.
+In **Reserve a Workout**, select `Demo time slot` from the slot dropdown for immediate demonstration playback. Unlike regular scheduled slots, the workout video starts immediately without waiting for the scheduled hour.
+
+To test synchronized playback with multiple users on the same local network:
+
+1. Open another browser session or incognito window.
+2. Sign in as a different user.
+3. Select the same `Demo time slot` and workout category.
+
+Both users will experience the same shared playback moment, including users who join slightly later during the active session.
 
 ---
 
@@ -51,7 +64,6 @@ Screenshots, GIFs, or a demo video will be added under `assets/screenshots/` as 
 - SQLite for local prototype storage.
 - SQLAlchemy for ORM-based database access.
 - LiteLLM/Ollama for optional local safety-review summaries.
-- OpenAI API as an optional paid LLM provider.
 - YouTube Data API v3 for workout video search and metadata.
 
 ---
@@ -92,7 +104,7 @@ Create environment configuration:
 cp .env.example .env
 ```
 
-Then fill in API keys for YouTube and optional OpenAI use.
+Then fill in the YouTube API key if you want live YouTube search. Without it, the prototype can still run with cached or mock fallback videos.
 
 Set `DEBUG=true` during local demos when you want `[FitHub AI]` diagnostic logs in the backend terminal and browser console. Set it to `false` when you want quieter output.
 
@@ -104,8 +116,6 @@ AI_LLM_PROVIDER=ollama
 MODEL=ollama/llama3
 BASE_URL=http://localhost:11434
 ```
-
-OpenAI can be enabled later by changing `AI_LLM_PROVIDER`, `MODEL`, and `OPENAI_API_KEY`.
 
 Default local admin account:
 
@@ -188,7 +198,7 @@ Expected prototype behaviour:
 
 - Visitors can access the landing page only; dashboard and broadcast data require login.
 - Members can register, sign in, reserve or cancel available slots, and submit video feedback.
-- Admins can monitor slot occupancy, review feedback, and override the selected video when required.
+- Admins can monitor slot occupancy, review feedback, manage member accounts, and run the video curator.
 - The browser client is a React single page application; member and admin workflows render inside the same app shell.
 
 Authentication and roles:
@@ -205,7 +215,7 @@ Slot scheduling:
 - A full slot returns a clear API conflict response instead of overbooking.
 - Slot scheduling uses deterministic database logic, not LLM reasoning.
 
-AI video recommendations:
+Video curation and recommendations:
 
 - The backend creates or returns a cached video session for each `time_slot + workout_category` pair.
 - Reserving a regular future slot only stores the reservation and category; video preparation waits until the slot time arrives.
@@ -216,7 +226,7 @@ AI video recommendations:
 - A cached video is marked for replacement after three plays, but it remains available until a replacement is found and confirmed.
 - Fresh YouTube candidates are marked pending until the browser confirms playback through the YouTube IFrame Player API; only confirmed videos are reused as playable cache videos.
 - If the confirmed cache is empty, the recommender can search YouTube, reuse older approved session videos, or use mock fallback for no-key/no-network demos.
-- Ollama/OpenAI via LiteLLM remain optional for short safety-review summaries; CrewAI is not used in the current implementation.
+- Ollama via LiteLLM remains optional for short safety-review summaries; CrewAI is not used in the current implementation.
 - Recommendation decisions are stored in `video_sessions` with provider, status, safety notes, and agent summary fields.
 
 Broadcast session sync:
@@ -275,6 +285,13 @@ project 2/
 │   └── frontend/
 │       ├── public/
 │       └── src/
+│           ├── components/
+│           ├── config.ts
+│           ├── debug.ts
+│           ├── types.ts
+│           ├── utils.ts
+│           ├── youtube.ts
+│           └── main.tsx
 ├── tests/
 ├── docs/
 ├── scripts/
@@ -283,8 +300,9 @@ project 2/
 ```
 
 - `src/backend/` contains the FastAPI application, database models, deterministic services, and optional LLM review hooks.
-- `src/frontend/` contains the React/Vite dashboard application.
-- `tests/` contains backend and frontend tests.
+- `src/frontend/` contains the React/Vite dashboard application. `main.tsx` owns app state and API orchestration, while `components/` contains stakeholder-facing UI areas such as authentication, member dashboard, admin dashboard, broadcast theater, and video playback.
+- Shared frontend helpers are separated into `types.ts`, `utils.ts`, `config.ts`, `debug.ts`, and `youtube.ts` so the SPA remains readable and type-checkable as features grow.
+- `tests/` contains backend coverage for the current prototype flows, with a frontend test folder reserved for future UI tests.
 - `docs/` contains project planning, implementation notes, and AI prompt documentation.
 - `scripts/` contains automation and developer utilities.
 - `assets/` stores screenshots, demo media, and visual assets.

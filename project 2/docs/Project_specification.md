@@ -36,14 +36,14 @@ This project is intended to satisfy the AI-assisted team-use full stack project 
 - Watch workout broadcast
 - Submit video feedback
 
-### Guest
+### Guest (Not implemented)
 - Limited dashboard access
 - Can view public broadcast
 - Cannot reserve slots
 
 ### Admin
 - Monitor active slots
-- View member occupancy
+- View/Edit member occupancy
 - Override workout video if required
 
 ---
@@ -60,7 +60,7 @@ Collected during registration:
 # 4. Time Slot Rules
 
 - Slots operate hourly
-- Operating hours: 9am–9pm
+- Operating hours: 9am–9pm (Date selection not included)
 - Maximum 20 signed-in members per slot
 - Capacity restriction helps reduce network load
 
@@ -71,6 +71,7 @@ Collected during registration:
 Prototype categories:
 - Upper Body
 - Lower Body
+- Cardio
 
 ---
 
@@ -82,10 +83,11 @@ Requirements:
 - Video duration approximately 10 minutes
 - Video category must match selected workout category
 - Video must be appropriate and safe for general users
+- Video must be embeddable and playable
 
 ---
 
-# 7. CrewAI Agents
+# 7. CrewAI Agents (Later switched to deterministic code-based agents)
 
 ## Trainer Agent
 Responsibilities:
@@ -172,10 +174,11 @@ Purpose:
 
 # 10. APIs Required
 
-## OpenAI API
+## OpenAI API (not used by application)
 Purpose:
 - AI reasoning
 - Agent decision-making
+- (OpenAI/Ollama-style reasoning is no longer central to the implemented workflow.)
 
 ## YouTube Data API v3
 Purpose:
@@ -289,5 +292,5 @@ This project demonstrates:
 - AI-assisted workflows
 - Multi-user system design
 - Prompt engineering
-- AI agent orchestration
+- AI agent orchestration (not implemented)
 - Team-use application architecture
