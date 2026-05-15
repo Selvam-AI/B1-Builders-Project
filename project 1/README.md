@@ -4,6 +4,16 @@
 
 The Geopolitical Market Forecaster is a full-stack AI-assisted prototype that ingests global news, identifies market-relevant signals, produces simple forecasts, reviews them through a governance layer, and displays the results in a browser dashboard.
 
+### Evaluator Readiness
+
+The project is structured to remain maintainable, readable, explainable, and accessible to non-technical stakeholders:
+
+- The first user-facing experience is a browser dashboard, not a code-only demo.
+- Agents are plain Python classes with clear responsibilities, coordinated by one pipeline.
+- The architecture, governance behavior, setup steps, and limitations are documented.
+- Tests verify the core ingestion, storage, analysis, forecast, governance, realtime, and dashboard paths.
+- Runtime API failures are logged without crashing the application.
+
 ### Problem
 
 - Market watchers, analysts, students, and decision-makers are affected by fast-moving geopolitical news.
@@ -13,12 +23,13 @@ The Geopolitical Market Forecaster is a full-stack AI-assisted prototype that in
 ### Outcome
 
 - Built a working FastAPI dashboard for geopolitical market signals.
+- Added a pictorial Company Insights dashboard for decisions such as Offshore & Marine and Airline exposure.
 - Implemented news ingestion from Guardian, NewsAPI, and RSS source options.
 - Added a multi-agent pipeline: Scraper, Economic Analyst, Predictor, and Governor.
 - Persisted news, insights, forecasts, governance reviews, and audit events in SQLite.
 - Added realtime dashboard refresh via WebSockets.
 - Added a governance report and regression tests.
-- Current verification: `19 passed`.
+- Current verification: `21 passed`.
 
 ---
 
@@ -42,8 +53,8 @@ Main user flow:
 
 1. Ingest news using `gmf ingest-news --source guardian`.
 2. Run the agent pipeline using `gmf run-pipeline`.
-3. Open the dashboard to review signals, forecasts, governance status, and source links.
-4. Use the manual refresh endpoint or WebSocket updates for realtime dashboard changes.
+3. Open the dashboard to review the two sector decisions, agent trace, governance caution, and evidence links.
+4. Use the manual refresh endpoint or WebSocket updates to update the decision board.
 
 Screenshots or demo video can be added later under an `assets/` folder if needed.
 
@@ -78,9 +89,10 @@ AI tools and services used:
 - Codex: project planning, implementation, debugging, refactoring, and documentation.
 - Guardian Open Platform: verified live news ingestion.
 - NewsAPI: client implemented, but live key verification returned `HTTP 401`.
-- LLM analysis provider: `ANALYSIS_PROVIDER=auto` uses Gemini when `GEMINI_API_KEY` is set, otherwise OpenAI when `OPENAI_API_KEY` is set, otherwise rule-based analysis.
+- LLM analysis provider: `ANALYSIS_PROVIDER=auto` uses Gemini when `GEMINI_API_KEY` is set, otherwise OpenAI when `OPENAI_API_KEY` is set, otherwise Ollama when `OLLAMA_ENABLED=true`, otherwise rule-based analysis.
 - Gemini: configured as a placeholder provider.
 - OpenAI: configured as the first working LLM analysis provider when Gemini is absent.
+- Ollama: optional local fallback if installed, running, and enabled.
 
 AI agents in the application are plain Python classes under `src/geopolitical_market_forecaster/agents/`. CrewAI is not used in the current runtime.
 
@@ -89,11 +101,24 @@ AI agents in the application are plain Python classes under `src/geopolitical_ma
 - Predictor Agent: creates bounded forecasts from insights.
 - Governor Agent: performs basic post-forecast governance checks.
 
+The dashboard also derives educational sector decisions from these outputs:
+
+- Offshore & Marine Exposure: `BUY / HOLD / AVOID` signal for examples such as Seatrium and Marco Polo Marine.
+- Airline Exposure: `BUY / HOLD / AVOID` signal for examples such as Singapore Airlines.
+
+These are demonstration signals only, not financial advice.
+
 Key prompts and decisions are recorded in:
 
 ```text
 docs/PROMPT_ACTION_LOG.md
 ```
+
+Evaluator-facing documents:
+
+- `docs/EVALUATOR_GUIDE.md`: quick review path, verification steps, and current limitations.
+- `docs/ARCHITECTURE.md`: system flow, module boundaries, and maintainability choices.
+- `docs/GOVERNANCE_REPORT.md`: what the Governor Agent checks and what it does not yet enforce.
 
 Key review points:
 
@@ -145,6 +170,9 @@ INGEST_PAGE_SIZE=10
 ANALYSIS_PROVIDER=auto
 GEMINI_MODEL=gemini-1.5-flash
 OPENAI_MODEL=gpt-4o-mini
+OLLAMA_ENABLED=false
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1
 ERROR_LOG_PATH=ERROR_LOG.txt
 ENABLE_BACKGROUND_POLLING=false
 ALERT_POLL_SECONDS=300
@@ -207,6 +235,14 @@ Dashboard JSON:
 http://127.0.0.1:8000/api/dashboard
 ```
 
+The visible dashboard is centered on a pictorial Company Insights view. It shows a large sector status, confidence gauge, agent workflow cards, evidence links, and a compact sector overview.
+
+```text
+News Event -> Analyst Insight -> Forecast Inference -> Sector Decision -> Governance Caution
+```
+
+The raw table counts for news, insights, forecasts, reviews, and audit events remain available through `/api/dashboard`, `gmf show-status`, and the SQLite database, but they are not shown as top-level dashboard boxes.
+
 Realtime WebSocket:
 
 ```text
@@ -250,7 +286,7 @@ gmf show-status
 
 Provider/API failures do not crash the application. Sanitized failures are appended to `ERROR_LOG.txt`.
 
-`ANALYSIS_PROVIDER=auto` resolves in this order: Gemini if `GEMINI_API_KEY` is present, OpenAI if `OPENAI_API_KEY` is present, and rule-based analysis if no LLM key is available. OpenAI analysis failures also fall back to the rule-based analyst so the pipeline can continue.
+`ANALYSIS_PROVIDER=auto` resolves in this order: Gemini if `GEMINI_API_KEY` is present, OpenAI if `OPENAI_API_KEY` is present, Ollama if `OLLAMA_ENABLED=true`, and rule-based analysis if no LLM provider is available. OpenAI/Gemini selection failures can fall back to Ollama when enabled, then to the rule-based analyst so the pipeline can continue.
 
 ### Developer Tests
 
@@ -302,7 +338,7 @@ Key folders:
 
 - `src/`: application source code.
 - `tests/`: pytest regression tests.
-- `docs/`: implementation plan, prompt log, governance report, tooling notes, and concept documents.
+- `docs/`: evaluator guide, architecture notes, implementation plan, prompt log, governance report, tooling notes, and concept documents.
 - `scripts/`: small local automation helpers.
 - `data/`: local SQLite runtime database.
 
@@ -320,6 +356,13 @@ Readable governance report:
 
 ```text
 docs/GOVERNANCE_REPORT.md
+```
+
+Architecture and evaluator notes:
+
+```text
+docs/ARCHITECTURE.md
+docs/EVALUATOR_GUIDE.md
 ```
 
 ---

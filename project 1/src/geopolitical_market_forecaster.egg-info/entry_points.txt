@@ -1,2 +1,0 @@
-[console_scripts]
-gmf = geopolitical_market_forecaster.cli:main

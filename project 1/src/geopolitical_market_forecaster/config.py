@@ -24,6 +24,9 @@ class Settings(BaseModel):
     analysis_provider: str = "auto"
     gemini_model: str = "gemini-1.5-flash"
     openai_model: str = "gpt-4o-mini"
+    ollama_enabled: bool = False
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "llama3.1"
     error_log_path: str = str(ROOT_DIR / "ERROR_LOG.txt")
     enable_background_polling: bool = False
     alert_poll_seconds: int = 300
@@ -36,6 +39,8 @@ class Settings(BaseModel):
             return "gemini"
         if self.openai_api_key:
             return "openai"
+        if self.ollama_enabled:
+            return "ollama"
         return "rule_based"
 
 
@@ -61,6 +66,10 @@ def get_settings() -> Settings:
         analysis_provider=os.getenv("ANALYSIS_PROVIDER", "auto"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        ollama_enabled=os.getenv("OLLAMA_ENABLED", "false").lower()
+        in {"1", "true", "yes", "on"},
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+        ollama_model=os.getenv("OLLAMA_MODEL", "llama3.1"),
         error_log_path=os.getenv("ERROR_LOG_PATH", str(ROOT_DIR / "ERROR_LOG.txt")),
         enable_background_polling=os.getenv(
             "ENABLE_BACKGROUND_POLLING",

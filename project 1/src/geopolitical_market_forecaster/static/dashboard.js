@@ -1,8 +1,5 @@
 const statusEl = document.getElementById("connection-status");
-const alertListEl = document.getElementById("alert-list");
-const alertCountEl = document.getElementById("alert-count");
-const signalCountEl = document.getElementById("signal-count");
-const signalsBodyEl = document.getElementById("signals-body");
+const decisionBoardEl = document.getElementById("decision-board");
 
 function setStatus(text, className) {
   statusEl.textContent = text;
@@ -18,73 +15,103 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function renderCounts(summary) {
-  Object.entries(summary).forEach(([key, value]) => {
-    const el = document.querySelector(`[data-count="${key}"]`);
-    if (el) el.textContent = value;
-  });
+function renderSectorDecisions(decisions) {
+  if (!decisionBoardEl || !decisions) return;
+  decisionBoardEl.innerHTML = decisions.map(renderDecision).join("");
 }
 
-function renderAlerts(alerts) {
-  alertCountEl.textContent = `${alerts.length} active`;
-  if (!alerts.length) {
-    alertListEl.innerHTML = '<div class="empty-alert">No medium or high severity alerts.</div>';
-    return;
-  }
-
-  alertListEl.innerHTML = alerts
-    .slice(0, 6)
-    .map((alert) => `
-      <a class="alert-item alert-${escapeHtml(alert.severity)}" href="${escapeHtml(alert.url)}" target="_blank" rel="noreferrer">
-        <strong>${escapeHtml(alert.title)}</strong>
-        <span>${escapeHtml(alert.source)} · ${escapeHtml(alert.signal_tier)} · ${escapeHtml(alert.confidence)}</span>
-      </a>
+function renderDecision(decision) {
+  const companyCards = (decision.candidates || [])
+    .map((candidate, index) => `
+      <div class="company-card ${index === 0 ? "card-primary" : "card-secondary"}">
+        <span class="card-label">${index === 0 ? "Primary Entity" : "Associated Exposure"}</span>
+        <h2 class="company-name">${escapeHtml(candidate)}</h2>
+      </div>
     `)
     .join("");
+  const agents = (decision.agent_steps || []).map(renderAgent).join("");
+  const evidence = (decision.evidence || []).length
+    ? (decision.evidence || []).map(renderEvidence).join("")
+    : "<p>No current matching news signal. Run ingestion and the pipeline to refresh.</p>";
+
+  return `
+    <section class="insight-layout insight-${escapeHtml(decision.theme)}" aria-label="${escapeHtml(decision.category)}">
+      <div class="insight-main">
+        <div class="company-display-section">${companyCards}</div>
+
+        <section class="focus-panel">
+          <div class="focus-grid">
+            <div class="status-block">
+              <span>Market Decision</span>
+              <strong class="decision-status status-${escapeHtml(String(decision.decision).toLowerCase())}">${escapeHtml(decision.decision)}</strong>
+            </div>
+            <div class="confidence-block">
+              <div class="confidence-line">
+                <span>Confidence Score</span>
+                <strong>${escapeHtml(decision.confidence)} (${escapeHtml(decision.confidence_score)}/100)</strong>
+              </div>
+              <div class="gauge" style="--score: ${escapeHtml(decision.confidence_score)}">
+                <div class="needle"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="workflow-panel">
+          <div class="workflow-title">Analysis: Agent Workflow</div>
+          <div class="agent-grid">${agents}</div>
+        </section>
+      </div>
+
+      <aside class="insight-side">
+        <section class="evidence-panel">
+          <div class="panel-title">Evidence & Source Intelligence</div>
+          <div class="evidence-list">${evidence}</div>
+        </section>
+        <section class="overview-panel">
+          <div class="panel-title">Sector Overview</div>
+          <div class="mini-map">
+            <div class="tile primary">${escapeHtml(String(decision.category).replace(" Exposure", ""))}</div>
+            <div class="tile muted"></div>
+            <div class="tile soft"></div>
+            <div class="tile risk"></div>
+            <div class="tile muted wide"></div>
+            <div class="tile soft"></div>
+            <div class="tile risk small"></div>
+            <div class="tile soft wide"></div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  `;
 }
 
-function renderSignals(signals) {
-  signalCountEl.textContent = `${signals.length} shown`;
-  if (!signals.length) {
-    signalsBodyEl.innerHTML = '<tr><td colspan="6" class="empty">No signals yet. Run ingestion and the pipeline to populate the dashboard.</td></tr>';
-    return;
-  }
+function renderAgent(step, index) {
+  const visualNumber = index + 1;
+  return `
+    <article class="agent-card">
+      <div class="agent-head">
+        <span class="agent-symbol symbol-${visualNumber}"></span>
+        <strong>${escapeHtml(step.agent)}</strong>
+      </div>
+      <p>${escapeHtml(step.action)}</p>
+      <div class="agent-visual visual-${visualNumber}"></div>
+    </article>
+  `;
+}
 
-  signalsBodyEl.innerHTML = signals
-    .map((signal) => {
-      const markets = (signal.affected_markets || [])
-        .map((market) => `<span>${escapeHtml(market)}</span>`)
-        .join("");
-      const governance = signal.approved === null
-        ? '<span class="pill pending">Pending</span>'
-        : signal.approved
-          ? '<span class="pill approved">Approved</span>'
-          : '<span class="pill flagged">Flagged</span>';
-      const date = signal.published_at ? ` · ${escapeHtml(signal.published_at.slice(0, 10))}` : "";
-      const summary = signal.summary ? `<p>${escapeHtml(signal.summary)}</p>` : "";
-
-      return `
-        <tr>
-          <td class="signal-title">
-            <a href="${escapeHtml(signal.url)}" target="_blank" rel="noreferrer">${escapeHtml(signal.title)}</a>
-            <span>${escapeHtml(signal.source)}${date}</span>
-            ${summary}
-          </td>
-          <td><span class="pill tier-${escapeHtml(String(signal.signal_tier).toLowerCase())}">${escapeHtml(signal.signal_tier)}</span></td>
-          <td><div class="tags">${markets}</div></td>
-          <td class="forecast">${escapeHtml(signal.forecast)}<span>${escapeHtml(signal.time_horizon)}</span></td>
-          <td><span class="pill confidence">${escapeHtml(signal.confidence)}</span></td>
-          <td>${governance}</td>
-        </tr>
-      `;
-    })
-    .join("");
+function renderEvidence(item) {
+  return `
+    <a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">
+      <strong>${escapeHtml(item.title)}</strong>
+      <span>${escapeHtml(item.source)} · ${escapeHtml(item.signal_tier)} · ${escapeHtml(item.confidence)}</span>
+      <small>Source link</small>
+    </a>
+  `;
 }
 
 function applyPayload(payload) {
-  if (payload.summary) renderCounts(payload.summary);
-  if (payload.alerts) renderAlerts(payload.alerts);
-  if (payload.signals) renderSignals(payload.signals);
+  if (payload.sector_decisions) renderSectorDecisions(payload.sector_decisions);
 }
 
 async function loadSnapshot() {
@@ -96,14 +123,14 @@ function connectWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   const socket = new WebSocket(`${protocol}://${window.location.host}/ws/alerts`);
 
-  socket.addEventListener("open", () => setStatus("Realtime: connected", "connected"));
+  socket.addEventListener("open", () => setStatus("Status: connected", "connected"));
   socket.addEventListener("message", (event) => applyPayload(JSON.parse(event.data)));
   socket.addEventListener("close", () => {
-    setStatus("Realtime: reconnecting", "disconnected");
+    setStatus("Status: reconnecting", "disconnected");
     setTimeout(connectWebSocket, 3000);
   });
   socket.addEventListener("error", () => {
-    setStatus("Realtime: connection issue", "disconnected");
+    setStatus("Status: connection issue", "disconnected");
     socket.close();
   });
 }

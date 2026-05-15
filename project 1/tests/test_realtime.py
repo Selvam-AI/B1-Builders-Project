@@ -63,6 +63,8 @@ def test_dashboard_payload_includes_alerts(tmp_path):
     assert payload["event"] == "snapshot"
     assert payload["summary"]["news_items"] == 1
     assert payload["signals"][0]["title"] == "Oil shipping risk"
+    assert payload["sector_decisions"][0]["decision"] in {"BUY", "HOLD"}
+    assert payload["sector_decisions"][1]["decision"] in {"AVOID", "HOLD"}
 
 
 @pytest.mark.asyncio

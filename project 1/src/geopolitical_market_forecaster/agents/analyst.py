@@ -27,6 +27,8 @@ class EconomicAnalystAgent:
             return await self._analyze_with_gemini(item)
         if provider == "openai":
             return await self._analyze_with_openai(item)
+        if provider == "ollama":
+            return await self._analyze_with_ollama(item)
         return self._analyze_with_rules(item)
 
     def _analyze_with_rules(self, item: NewsItem) -> EconomicInsight:
@@ -64,10 +66,10 @@ class EconomicAnalystAgent:
 
     async def _analyze_with_gemini(self, item: NewsItem) -> EconomicInsight:
         if not self.settings or not self.settings.gemini_api_key:
-            insight = self._analyze_with_rules(item)
+            insight = await self._fallback_to_ollama_or_rules(item)
             insight.rationale = (
                 "Gemini analysis was selected, but GEMINI_API_KEY is not set. "
-                f"Fell back to rules. {insight.rationale}"
+                f"Fell back safely. {insight.rationale}"
             )
             return insight
 
@@ -84,10 +86,10 @@ class EconomicAnalystAgent:
 
     async def _analyze_with_openai(self, item: NewsItem) -> EconomicInsight:
         if not self.settings or not self.settings.openai_api_key:
-            insight = self._analyze_with_rules(item)
+            insight = await self._fallback_to_ollama_or_rules(item)
             insight.rationale = (
                 "OpenAI analysis was selected, but OPENAI_API_KEY is not set. "
-                f"Fell back to rules. {insight.rationale}"
+                f"Fell back safely. {insight.rationale}"
             )
             return insight
 
@@ -101,10 +103,10 @@ class EconomicAnalystAgent:
                 "openai-analysis",
                 f"{type(exc).__name__}: {exc}",
             )
-            insight = self._analyze_with_rules(item)
+            insight = await self._fallback_to_ollama_or_rules(item)
             insight.rationale = (
                 "OpenAI analysis was unavailable or returned unusable output. "
-                f"Fell back to rules. {insight.rationale}"
+                f"Fell back safely. {insight.rationale}"
             )
             return insight
 
@@ -152,6 +154,80 @@ class EconomicAnalystAgent:
             data = response.json()
         return data["choices"][0]["message"]["content"]
 
+    async def _fallback_to_ollama_or_rules(self, item: NewsItem) -> EconomicInsight:
+        if self.settings and self.settings.ollama_enabled:
+            return await self._analyze_with_ollama(item)
+        return self._analyze_with_rules(item)
+
+    async def _analyze_with_ollama(self, item: NewsItem) -> EconomicInsight:
+        if not self.settings or not self.settings.ollama_enabled:
+            insight = self._analyze_with_rules(item)
+            insight.rationale = (
+                "Ollama analysis was selected, but OLLAMA_ENABLED is false. "
+                f"Fell back to rules. {insight.rationale}"
+            )
+            return insight
+
+        try:
+            content = await self._request_ollama_analysis(item)
+            payload = json.loads(content)
+            insight = self._insight_from_llm_payload(item, payload)
+            insight.rationale = insight.rationale.replace(
+                "OpenAI analysis:",
+                "Ollama analysis:",
+                1,
+            )
+            return insight
+        except Exception as exc:
+            append_error_log(
+                self.settings.error_log_path,
+                "ollama-analysis",
+                f"{type(exc).__name__}: {exc}",
+            )
+            insight = self._analyze_with_rules(item)
+            insight.rationale = (
+                "Ollama analysis was unavailable or returned unusable output. "
+                f"Fell back to rules. {insight.rationale}"
+            )
+            return insight
+
+    async def _request_ollama_analysis(self, item: NewsItem) -> str:
+        article_text = "\n".join(
+            part
+            for part in [item.title, item.summary or "", item.raw_text or ""]
+            if part
+        )
+        prompt = (
+            "Analyze this geopolitical news item for market relevance. "
+            "Return only JSON with keys signal_tier, themes, affected_markets, "
+            "and rationale. signal_tier must be one of Actionable, FYI, or Noise. "
+            "Keep rationale to one concise sentence.\n\n"
+            f"Source: {item.source}\n"
+            f"Region: {item.region}\n"
+            f"Article:\n{article_text[:4000]}"
+        )
+        body = {
+            "model": self.settings.ollama_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a careful economic analyst. Separate evidence "
+                        "from inference and avoid unsupported certainty."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            "format": "json",
+            "stream": False,
+        }
+        base_url = self.settings.ollama_base_url.rstrip("/")
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(f"{base_url}/api/chat", json=body)
+            response.raise_for_status()
+            data = response.json()
+        return data["message"]["content"]
+
     def _insight_from_llm_payload(
         self,
         item: NewsItem,
@@ -164,7 +240,7 @@ class EconomicAnalystAgent:
         ]
         rationale = payload.get("rationale")
         if not isinstance(rationale, str) or not rationale.strip():
-            rationale = "OpenAI analysis returned market relevance signals."
+            rationale = "LLM analysis returned market relevance signals."
         return EconomicInsight(
             news_item=item,
             signal_tier=signal_tier,

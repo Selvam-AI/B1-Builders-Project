@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import WebSocket
 
 from geopolitical_market_forecaster.config import Settings
+from geopolitical_market_forecaster.decisions import build_sector_decisions
 from geopolitical_market_forecaster.ingestion import NewsIngestionService
 from geopolitical_market_forecaster.orchestration.pipeline import ForecastPipeline
 from geopolitical_market_forecaster.storage import (
@@ -68,6 +69,7 @@ def dashboard_payload(settings: Settings, event: str) -> dict[str, Any]:
         "summary": dashboard_summary(settings.database_url),
         "signals": signals,
         "alerts": alerts,
+        "sector_decisions": build_sector_decisions(signals),
         "analysis_provider": settings.resolved_analysis_provider(),
     }
 

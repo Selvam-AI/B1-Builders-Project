@@ -7,113 +7,117 @@
     <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Geopolitical Market Forecaster</p>
-        <h1>Market Signal Dashboard</h1>
-      </div>
-      <div class="status-panel">
-        <div class="provider">Analysis: {{ analysis_provider }}</div>
-        <div id="connection-status" class="connection-status">Realtime: connecting</div>
-      </div>
-    </header>
+    <div class="app-shell">
+      <aside class="side-rail" aria-label="Dashboard navigation">
+        <div class="rail-mark"></div>
+        <div class="rail-icon active"></div>
+        <div class="rail-icon"></div>
+        <div class="rail-icon"></div>
+        <div class="rail-icon"></div>
+      </aside>
 
-    <main>
-      <section class="metrics" aria-label="Pipeline counts">
-        <div class="metric">
-          <span>News</span>
-          <strong data-count="news_items">{{ summary.news_items }}</strong>
-        </div>
-        <div class="metric">
-          <span>Insights</span>
-          <strong data-count="economic_insights">{{ summary.economic_insights }}</strong>
-        </div>
-        <div class="metric">
-          <span>Forecasts</span>
-          <strong data-count="market_forecasts">{{ summary.market_forecasts }}</strong>
-        </div>
-        <div class="metric">
-          <span>Reviews</span>
-          <strong data-count="governance_reviews">{{ summary.governance_reviews }}</strong>
-        </div>
-        <div class="metric">
-          <span>Audit Events</span>
-          <strong data-count="audit_events">{{ summary.audit_events }}</strong>
-        </div>
-      </section>
+      <div class="page">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Geopolitical Market Forecaster</p>
+            <h1>Company Insights</h1>
+          </div>
+          <div class="status-panel">
+            <label for="analysis-provider">Analysis</label>
+            <select id="analysis-provider" aria-label="Analysis provider">
+              <option selected>{{ analysis_provider }}</option>
+            </select>
+            <div id="connection-status" class="connection-status">Status: connecting</div>
+          </div>
+        </header>
 
-      <section class="alerts" aria-label="Realtime alerts">
-        <div class="section-heading">
-          <h2>Realtime Alerts</h2>
-          <span id="alert-count">0 active</span>
-        </div>
-        <div id="alert-list" class="alert-list">
-          <div class="empty-alert">No medium or high severity alerts.</div>
-        </div>
-      </section>
+        <main>
+          <div id="decision-board" class="insights-stack">
+            {% for decision in sector_decisions %}
+            <section class="insight-layout insight-{{ decision.theme }}" aria-label="{{ decision.category }}">
+              <div class="insight-main">
+                <div class="company-display-section">
+                  {% for candidate in decision.candidates %}
+                  <div class="company-card {% if loop.first %}card-primary{% else %}card-secondary{% endif %}">
+                    <span class="card-label">{% if loop.first %}Primary Entity{% else %}Associated Exposure{% endif %}</span>
+                    <h2 class="company-name">{{ candidate }}</h2>
+                  </div>
+                  {% endfor %}
+                </div>
 
-      <section class="signals" aria-label="Market signals">
-        <div class="section-heading">
-          <h2>Latest Signals</h2>
-          <span id="signal-count">{{ signals|length }} shown</span>
-        </div>
+                <section class="focus-panel">
+                  <div class="focus-grid">
+                    <div class="status-block">
+                      <span>Market Decision</span>
+                      <strong class="decision-status status-{{ decision.decision|lower }}">{{ decision.decision }}</strong>
+                    </div>
+                    <div class="confidence-block">
+                      <div class="confidence-line">
+                        <span>Confidence Score</span>
+                        <strong>{{ decision.confidence }} ({{ decision.confidence_score }}/100)</strong>
+                      </div>
+                      <div class="gauge" style="--score: {{ decision.confidence_score }}">
+                        <div class="needle"></div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Signal</th>
-                <th>Tier</th>
-                <th>Markets</th>
-                <th>Forecast</th>
-                <th>Confidence</th>
-                <th>Governance</th>
-              </tr>
-            </thead>
-            <tbody id="signals-body">
-              {% for signal in signals %}
-              <tr>
-                <td class="signal-title">
-                  <a href="{{ signal.url }}" target="_blank" rel="noreferrer">{{ signal.title }}</a>
-                  <span>{{ signal.source }}{% if signal.published_at %} · {{ signal.published_at[:10] }}{% endif %}</span>
-                  {% if signal.summary %}<p>{{ signal.summary }}</p>{% endif %}
-                </td>
-                <td><span class="pill tier-{{ signal.signal_tier|lower }}">{{ signal.signal_tier }}</span></td>
-                <td>
-                  <div class="tags">
-                    {% for market in signal.affected_markets %}
-                      <span>{{ market }}</span>
+                <section class="workflow-panel">
+                  <div class="workflow-title">Analysis: Agent Workflow</div>
+                  <div class="agent-grid">
+                    {% for step in decision.agent_steps %}
+                    <article class="agent-card">
+                      <div class="agent-head">
+                        <span class="agent-symbol symbol-{{ loop.index }}"></span>
+                        <strong>{{ step.agent }}</strong>
+                      </div>
+                      <p>{{ step.action }}</p>
+                      <div class="agent-visual visual-{{ loop.index }}"></div>
+                    </article>
                     {% endfor %}
                   </div>
-                </td>
-                <td class="forecast">
-                  {{ signal.forecast }}
-                  <span>{{ signal.time_horizon }}</span>
-                </td>
-                <td><span class="pill confidence">{{ signal.confidence }}</span></td>
-                <td>
-                  {% if signal.approved is none %}
-                    <span class="pill pending">Pending</span>
-                  {% elif signal.approved %}
-                    <span class="pill approved">Approved</span>
-                  {% else %}
-                    <span class="pill flagged">Flagged</span>
-                  {% endif %}
-                  {% if signal.flags %}
-                    <small>{{ signal.flags|join(", ") }}</small>
-                  {% endif %}
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="6" class="empty">No signals yet. Run ingestion and the pipeline to populate the dashboard.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+                </section>
+              </div>
+
+              <aside class="insight-side">
+                <section class="evidence-panel">
+                  <div class="panel-title">Evidence & Source Intelligence</div>
+                  <div class="evidence-list">
+                    {% for item in decision.evidence %}
+                    <a href="{{ item.url }}" target="_blank" rel="noreferrer">
+                      <strong>{{ item.title }}</strong>
+                      <span>{{ item.source }} · {{ item.signal_tier }} · {{ item.confidence }}</span>
+                      <small>Source link</small>
+                    </a>
+                    {% else %}
+                    <p>No current matching news signal. Run ingestion and the pipeline to refresh.</p>
+                    {% endfor %}
+                  </div>
+                </section>
+
+                <section class="overview-panel">
+                  <div class="panel-title">Sector Overview</div>
+                  <div class="mini-map">
+                    <div class="tile primary">{{ decision.category.split(" Exposure")[0] }}</div>
+                    <div class="tile muted"></div>
+                    <div class="tile soft"></div>
+                    <div class="tile risk"></div>
+                    <div class="tile muted wide"></div>
+                    <div class="tile soft"></div>
+                    <div class="tile risk small"></div>
+                    <div class="tile soft wide"></div>
+                  </div>
+                </section>
+              </aside>
+            </section>
+            {% endfor %}
+          </div>
+        </main>
+
+        <footer>Educational demo signals, not financial advice.</footer>
+      </div>
+    </div>
     <script src="{{ url_for('static', path='dashboard.js') }}"></script>
   </body>
 </html>

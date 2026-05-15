@@ -56,8 +56,8 @@ This stack should be validated as implementation begins.
 
 - Backend: Python with FastAPI for API endpoints and orchestration.
 - Agent orchestration: simple explicit Python service classes coordinated by `ForecastPipeline`; CrewAI and AutoGen are not used in the current implementation.
-- LLM layer: provider abstraction that can use Gemini or OpenAI, with deterministic rule-based fallback.
-- Analysis provider selection: `ANALYSIS_PROVIDER=auto` resolves to Gemini when `GEMINI_API_KEY` is set, OpenAI when `OPENAI_API_KEY` is set, and rules when no LLM key is available.
+- LLM layer: provider abstraction that can use Gemini, OpenAI, or optional local Ollama, with deterministic rule-based fallback.
+- Analysis provider selection: `ANALYSIS_PROVIDER=auto` resolves to Gemini when `GEMINI_API_KEY` is set, OpenAI when `OPENAI_API_KEY` is set, Ollama when `OLLAMA_ENABLED=true`, and rules when no LLM provider is available.
 - Data ingestion: RSS feeds and/or zero-cost news APIs first; paid APIs deferred.
 - Storage: SQLite for prototype persistence and audit logs.
 - Frontend: React/Vite or a lightweight FastAPI-rendered dashboard, depending on project scope chosen next.

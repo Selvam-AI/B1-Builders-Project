@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from geopolitical_market_forecaster.config import get_settings
+from geopolitical_market_forecaster.decisions import build_sector_decisions
 from geopolitical_market_forecaster.ingestion import NewsIngestionService
 from geopolitical_market_forecaster.orchestration.pipeline import ForecastPipeline
 from geopolitical_market_forecaster.realtime import (
@@ -80,12 +81,14 @@ async def root(request: Request) -> HTMLResponse:
 async def dashboard(request: Request) -> HTMLResponse:
     settings = get_settings()
     initialize_database(settings.database_url)
+    signals = list_dashboard_signals(settings.database_url)
     return templates.TemplateResponse(
         request,
         "dashboard.html",
         {
             "summary": dashboard_summary(settings.database_url),
-            "signals": list_dashboard_signals(settings.database_url),
+            "signals": signals,
+            "sector_decisions": build_sector_decisions(signals),
             "analysis_provider": settings.resolved_analysis_provider(),
         },
     )
