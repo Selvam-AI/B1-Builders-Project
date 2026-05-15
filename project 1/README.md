@@ -2,17 +2,23 @@
 
 ## Overview
 
-The Geopolitical Market Forecaster is a full-stack AI-assisted prototype that ingests global news, identifies market-relevant signals, produces simple forecasts, reviews them through a governance layer, and displays the results in a browser dashboard.
+The Geopolitical Market Forecaster is an AI-assisted dashboard that reads real-time Middle East news from live news sources and predicts whether selected Singapore market sectors may benefit or face risk.
 
-### Evaluator Readiness
+The system analyzes geopolitical events related to oil supply, shipping disruption, aviation, and regional instability, then generates simple educational market signals such as `BUY`, `HOLD`, or `AVOID`.
 
-The project is structured to remain maintainable, readable, explainable, and accessible to non-technical stakeholders:
+The dashboard currently demonstrates example decision signals for:
 
-- The first user-facing experience is a browser dashboard, not a code-only demo.
-- Agents are plain Python classes with clear responsibilities, coordinated by one pipeline.
-- The architecture, governance behavior, setup steps, and limitations are documented.
-- Tests verify the core ingestion, storage, analysis, forecast, governance, realtime, and dashboard paths.
-- Runtime API failures are logged without crashing the application.
+- Seatrium (Offshore & Marine exposure)
+- Singapore Airlines (Airline exposure)
+
+The application uses a multi-agent pipeline to:
+
+1. Collect and normalize live news articles.
+2. Detect market-relevant geopolitical themes.
+3. Predict possible sector impact.
+4. Display confidence levels, workflow explanations, and supporting evidence links.
+
+This project is designed for learning, evaluation, and demonstration purposes only. It is not financial advice or an automated trading system.
 
 ### Problem
 
@@ -23,9 +29,9 @@ The project is structured to remain maintainable, readable, explainable, and acc
 ### Outcome
 
 - Built a working FastAPI dashboard for geopolitical market signals.
-- Added a pictorial Company Insights dashboard for decisions such as Offshore & Marine and Airline exposure.
+- Added an HTML-rendered sector decision dashboard for example Offshore & Marine and Airline exposure decisions.
 - Implemented news ingestion from Guardian, NewsAPI, and RSS source options.
-- Added a multi-agent pipeline: Scraper, Economic Analyst, Predictor, and Governor.
+- Added a plain-Python workflow pipeline with four named components: Scraper, Economic Analyst, Predictor, and Governor.
 - Persisted news, insights, forecasts, governance reviews, and audit events in SQLite.
 - Added realtime dashboard refresh via WebSockets.
 - Added a governance report and regression tests.
@@ -35,12 +41,10 @@ The project is structured to remain maintainable, readable, explainable, and acc
 
 ## Demo
 
-Start the backend server:
+From the project folder, start the backend server:
 
 ```bash
-cd "project 1"
-source .venv/bin/activate
-uvicorn geopolitical_market_forecaster.main:app --host 0.0.0.0 --port 8000
+scripts/run_dashboard.sh
 ```
 
 Open the dashboard:
@@ -49,14 +53,12 @@ Open the dashboard:
 http://127.0.0.1:8000/dashboard
 ```
 
-Main user flow:
+What the demo is showing:
 
-1. Ingest news using `gmf ingest-news --source guardian`.
-2. Run the agent pipeline using `gmf run-pipeline`.
-3. Open the dashboard to review the two sector decisions, agent trace, governance caution, and evidence links.
-4. Use the manual refresh endpoint or WebSocket updates to update the decision board.
-
-Screenshots or demo video can be added later under an `assets/` folder if needed.
+- News is ingested from configured sources such as Guardian, NewsAPI, or RSS.
+- The plain-Python workflow pipeline creates insights, forecasts, governance reviews, and educational sector decisions.
+- The dashboard shows two example decision cards, agent workflow, confidence, and evidence links.
+- The dashboard can refresh from backend data through the API/WebSocket path.
 
 ---
 
@@ -94,7 +96,9 @@ AI tools and services used:
 - OpenAI: configured as the first working LLM analysis provider when Gemini is absent.
 - Ollama: optional local fallback if installed, running, and enabled.
 
-AI agents in the application are plain Python classes under `src/geopolitical_market_forecaster/agents/`. CrewAI is not used in the current runtime.
+The named agents in this application are plain Python classes under `src/geopolitical_market_forecaster/agents/`. CrewAI is not used in the current runtime. They are workflow components with explicit responsibilities, not autonomous external-agent framework workers.
+
+Most pipeline behavior is deterministic and rule-based. The Economic Analyst can optionally call an LLM when `ANALYSIS_PROVIDER` and API keys are configured; if Gemini, OpenAI, or Ollama are unavailable, it falls back to rule-based analysis so the project remains runnable and explainable.
 
 - Scraper Agent: collects and normalizes market-relevant news.
 - Economic Analyst Agent: creates market-oriented insights.
@@ -106,19 +110,16 @@ The dashboard also derives educational sector decisions from these outputs:
 - Offshore & Marine Exposure: `BUY / HOLD / AVOID` signal for examples such as Seatrium and Marco Polo Marine.
 - Airline Exposure: `BUY / HOLD / AVOID` signal for examples such as Singapore Airlines.
 
-These are demonstration signals only, not financial advice.
+These are demonstration signals only, not financial advice. The dashboard intentionally includes an Agent Workflow section so evaluators can see what each plain-Python agent contributes before a `BUY`, `HOLD`, or `AVOID` example appears:
+
+- Scraper Agent: gathers and normalizes source-linked news.
+- Economic Analyst Agent: turns news into market-relevant themes.
+- Predictor Agent: converts themes into a bounded sector forecast.
+- Governor Agent: performs a basic review after prediction and records governance output for auditability.
 
 Key prompts and decisions are recorded in:
 
-```text
-docs/PROMPT_ACTION_LOG.md
-```
-
-Evaluator-facing documents:
-
-- `docs/EVALUATOR_GUIDE.md`: quick review path, verification steps, and current limitations.
-- `docs/ARCHITECTURE.md`: system flow, module boundaries, and maintainability choices.
-- `docs/GOVERNANCE_REPORT.md`: what the Governor Agent checks and what it does not yet enforce.
+[docs/PROMPT_ACTION_LOG.md](docs/PROMPT_ACTION_LOG.md)
 
 Key review points:
 
@@ -235,10 +236,10 @@ Dashboard JSON:
 http://127.0.0.1:8000/api/dashboard
 ```
 
-The visible dashboard is centered on a pictorial Company Insights view. It shows a large sector status, confidence gauge, agent workflow cards, evidence links, and a compact sector overview.
+The visible dashboard is centered on two educational company/sector decision cards. It shows a large `BUY`, `HOLD`, or `AVOID` signal, confidence score, agent workflow, and evidence links.
 
 ```text
-News Event -> Analyst Insight -> Forecast Inference -> Sector Decision -> Governance Caution
+News Event -> Scraper Agent -> Economic Analyst Agent -> Predictor Agent -> Governor Agent -> Sector Decision
 ```
 
 The raw table counts for news, insights, forecasts, reviews, and audit events remain available through `/api/dashboard`, `gmf show-status`, and the SQLite database, but they are not shown as top-level dashboard boxes.
@@ -350,7 +351,7 @@ Key folders:
 
 The Governor Agent is currently a basic post-forecast review layer. It checks whether forecasts include evidence, flags high-confidence forecasts for manual review, preserves uncertainty notes, and keeps source URLs attached for traceability.
 
-Governance output is visible in the dashboard Governance column and persisted in SQLite tables such as `governance_reviews` and `audit_events`. It does not yet prevent the Analyst Agent from using weak or unverified source material before analysis.
+Governance output is persisted in SQLite tables such as `governance_reviews` and `audit_events` and summarized in `docs/GOVERNANCE_REPORT.md`. It does not yet prevent the Analyst Agent from using weak or unverified source material before analysis. The current dashboard keeps the visible experience focused on the decision signal, agent workflow, and source evidence.
 
 Readable governance report:
 

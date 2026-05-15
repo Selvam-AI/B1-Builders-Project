@@ -19,8 +19,8 @@ This file records local tools and editor extensions used for the Geopolitical Ma
 - GitLens: richer Git history and blame views. Optional because built-in VS Code Git is enough for this project.
 - REST Client: quick API endpoint testing from `.http` files. Optional because `curl`, browser docs, or Thunder Client can cover the same need.
 - Thunder Client: GUI API testing inside VS Code. Optional alternative to REST Client.
-- Prettier: frontend formatting once the React/Vite dashboard is added.
-- ESLint: frontend linting once JavaScript or TypeScript dashboard code is added.
+- Prettier: optional formatting for dashboard HTML, CSS, and JavaScript if the frontend grows.
+- ESLint: optional linting if dashboard JavaScript becomes more complex.
 
 ## Not Added Yet
 

@@ -4,120 +4,88 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Geopolitical Market Forecaster</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') ~ '?v=20260515-3' }}">
   </head>
   <body>
-    <div class="app-shell">
-      <aside class="side-rail" aria-label="Dashboard navigation">
-        <div class="rail-mark"></div>
-        <div class="rail-icon active"></div>
-        <div class="rail-icon"></div>
-        <div class="rail-icon"></div>
-        <div class="rail-icon"></div>
-      </aside>
-
-      <div class="page">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Geopolitical Market Forecaster</p>
-            <h1>Company Insights</h1>
-          </div>
-          <div class="status-panel">
-            <label for="analysis-provider">Analysis</label>
-            <select id="analysis-provider" aria-label="Analysis provider">
-              <option selected>{{ analysis_provider }}</option>
-            </select>
-            <div id="connection-status" class="connection-status">Status: connecting</div>
-          </div>
-        </header>
-
-        <main>
-          <div id="decision-board" class="insights-stack">
-            {% for decision in sector_decisions %}
-            <section class="insight-layout insight-{{ decision.theme }}" aria-label="{{ decision.category }}">
-              <div class="insight-main">
-                <div class="company-display-section">
-                  {% for candidate in decision.candidates %}
-                  <div class="company-card {% if loop.first %}card-primary{% else %}card-secondary{% endif %}">
-                    <span class="card-label">{% if loop.first %}Primary Entity{% else %}Associated Exposure{% endif %}</span>
-                    <h2 class="company-name">{{ candidate }}</h2>
-                  </div>
-                  {% endfor %}
-                </div>
-
-                <section class="focus-panel">
-                  <div class="focus-grid">
-                    <div class="status-block">
-                      <span>Market Decision</span>
-                      <strong class="decision-status status-{{ decision.decision|lower }}">{{ decision.decision }}</strong>
-                    </div>
-                    <div class="confidence-block">
-                      <div class="confidence-line">
-                        <span>Confidence Score</span>
-                        <strong>{{ decision.confidence }} ({{ decision.confidence_score }}/100)</strong>
-                      </div>
-                      <div class="gauge" style="--score: {{ decision.confidence_score }}">
-                        <div class="needle"></div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section class="workflow-panel">
-                  <div class="workflow-title">Analysis: Agent Workflow</div>
-                  <div class="agent-grid">
-                    {% for step in decision.agent_steps %}
-                    <article class="agent-card">
-                      <div class="agent-head">
-                        <span class="agent-symbol symbol-{{ loop.index }}"></span>
-                        <strong>{{ step.agent }}</strong>
-                      </div>
-                      <p>{{ step.action }}</p>
-                      <div class="agent-visual visual-{{ loop.index }}"></div>
-                    </article>
-                    {% endfor %}
-                  </div>
-                </section>
-              </div>
-
-              <aside class="insight-side">
-                <section class="evidence-panel">
-                  <div class="panel-title">Evidence & Source Intelligence</div>
-                  <div class="evidence-list">
-                    {% for item in decision.evidence %}
-                    <a href="{{ item.url }}" target="_blank" rel="noreferrer">
-                      <strong>{{ item.title }}</strong>
-                      <span>{{ item.source }} · {{ item.signal_tier }} · {{ item.confidence }}</span>
-                      <small>Source link</small>
-                    </a>
-                    {% else %}
-                    <p>No current matching news signal. Run ingestion and the pipeline to refresh.</p>
-                    {% endfor %}
-                  </div>
-                </section>
-
-                <section class="overview-panel">
-                  <div class="panel-title">Sector Overview</div>
-                  <div class="mini-map">
-                    <div class="tile primary">{{ decision.category.split(" Exposure")[0] }}</div>
-                    <div class="tile muted"></div>
-                    <div class="tile soft"></div>
-                    <div class="tile risk"></div>
-                    <div class="tile muted wide"></div>
-                    <div class="tile soft"></div>
-                    <div class="tile risk small"></div>
-                    <div class="tile soft wide"></div>
-                  </div>
-                </section>
-              </aside>
-            </section>
-            {% endfor %}
-          </div>
-        </main>
-
-        <footer>Educational demo signals, not financial advice.</footer>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Geopolitical Market Forecaster</p>
+        <h1>Sector Decision Dashboard</h1>
       </div>
-    </div>
-    <script src="{{ url_for('static', path='dashboard.js') }}"></script>
+      <div class="status-panel">
+        <span>Analysis: {{ analysis_provider }}</span>
+        <strong id="connection-status">Connecting</strong>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div>
+          <h2>Market decisions from geopolitical news</h2>
+        </div>
+      </section>
+
+      <div id="decision-board" class="decision-stack">
+        {% for decision in sector_decisions %}
+        <article class="decision-card decision-{{ decision.decision|lower }} sector-{{ decision.theme }}">
+          <div class="decision-main">
+            <div class="company-row">
+              {% for candidate in decision.candidates %}
+              <div class="company-chip {% if loop.first %}primary-company{% endif %}">
+                <span>{% if loop.first %}Primary Entity{% else %}Associated Exposure{% endif %}</span>
+                <strong>{{ candidate }}</strong>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="decision-summary">
+              <div class="decision-word decision-word-{{ decision.decision|lower }}">{{ decision.decision }}</div>
+              <div class="decision-copy">
+                <h3>{{ decision.category }}</h3>
+                <p>{{ decision.inference }}</p>
+                <div class="confidence-wrap">
+                  <span>Confidence</span>
+                  <strong>{{ decision.confidence }} ({{ decision.confidence_score }}/100)</strong>
+                  <div class="confidence-track">
+                    <div class="confidence-fill" style="--confidence-score: {{ decision.confidence_score }}"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <section class="workflow">
+              <h4>Agent Workflow</h4>
+              <div class="workflow-steps">
+                {% for step in decision.agent_steps %}
+                <div class="workflow-step">
+                  <span>{{ loop.index }}</span>
+                  <strong>{{ step.agent }}</strong>
+                  <p>{{ step.action }}</p>
+                </div>
+                {% endfor %}
+              </div>
+            </section>
+          </div>
+
+          <aside class="evidence-card">
+            <h4>Evidence Links</h4>
+            <div class="evidence-list">
+              {% for item in decision.evidence %}
+              <a href="{{ item.url }}" target="_blank" rel="noreferrer">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.source }} · {{ item.signal_tier }} · {{ item.confidence }}</span>
+              </a>
+              {% else %}
+              <p>No matching evidence yet. Run ingestion and pipeline refresh.</p>
+              {% endfor %}
+            </div>
+          </aside>
+        </article>
+        {% endfor %}
+      </div>
+    </main>
+
+    <footer>Educational demo signals, not financial advice.</footer>
+    <script src="{{ url_for('static', path='dashboard.js') ~ '?v=20260515-3' }}"></script>
   </body>
 </html>
