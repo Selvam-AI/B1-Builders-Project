@@ -21,11 +21,12 @@ Completed so far:
 - Backend core with FastAPI, SQLAlchemy, SQLite setup, project models, seed data, core read APIs, DB init script, and Phase 2 tests.
 - Authentication and role handling with JWT bearer tokens, validated member email, seeded local admin, protected dashboard/broadcast routes, and Phase 3 tests.
 - Slot scheduling with member reserve/cancel endpoints, duplicate prevention, 20-member capacity enforcement, admin occupancy summary, and Phase 4 tests.
-- AI video recommendation workflow with cached `video_sessions`, provider-aware mock fallback, automatic recommendation creation after reservation, and Phase 5 tests.
+- Deterministic video recommendation workflow with cached `video_sessions`, provider-aware mock fallback, demo/current-window preparation, and Phase 5 tests.
 - Feedback loop with member like/dislike create/update, reservation validation, admin feedback summaries, and Phase 6 tests.
 - React single page application with auth entry, member dashboard, admin dashboard, backend API integration, and workout hero visual.
 - Runtime broadcast session sync with shared start time, playback offset, participant tracking, exit tracking, and Phase 7 broadcast tests.
 - YouTube IFrame Player API playback confirmation and failure replacement flow with backend cache confirmation.
+- Deterministic Video Curator cache using `video_cache_entries`, least-played selection, play-count rotation, and admin cache endpoints.
 
 Next focus:
 - End-to-end manual demo pass with backend and frontend running together.
@@ -54,7 +55,7 @@ Goals:
 - Implement FastAPI application structure.
 - Configure SQLite and SQLAlchemy.
 - Create models for `users`, `time_slots`, `slot_signups`, `workout_categories`, `video_sessions`, and `feedback`.
-- Add seed data for 9am-9pm hourly slots and Upper Body / Lower Body categories.
+- Add seed data for 9am-9pm hourly slots and Upper Body / Lower Body / Cardio categories.
 
 Deliverables:
 - Database session setup.
@@ -67,7 +68,7 @@ Status: Complete.
 Implemented:
 - SQLAlchemy database engine, session dependency, and table initialization.
 - ORM models for `users`, `time_slots`, `slot_signups`, `workout_categories`, `video_sessions`, and `feedback`.
-- Seed data for hourly slots from 9am-9pm and Upper Body / Lower Body categories.
+- Seed data for hourly slots from 9am-9pm and Upper Body / Lower Body / Cardio categories.
 - Startup database initialization and seed flow.
 - Local database initialization script at `scripts/init_db.py`.
 - Backend read APIs for status, time slots, workout categories, and video sessions.
@@ -134,21 +135,18 @@ Implemented:
 - Capacity enforcement using deterministic database counts; LLM agents are not involved in scheduling.
 - Phase 4 ASGI tests covering reserve, cancel, duplicate rejection, full-slot rejection, admin occupancy, and member restriction.
 
-## Phase 5: AI Video Recommendation Workflow
+## Phase 5: Deterministic Video Recommendation Workflow
 
 Goals:
-- Integrate CrewAI-style workflow with Trainer Agent, Safety Checker Agent, Schedule Agent, and Admin Assistant Agent.
 - Use YouTube Data API v3 for workout video candidates.
-- Use Ollama as the default local LLM for CrewAI reasoning and agent decision-making.
-- Keep OpenAI as an optional provider if credits are available later.
-- Select approximately 10-minute videos matching Upper Body or Lower Body categories.
-- Keep agent coordination internal to the backend; users should not directly interact with CrewAI.
+- Use deterministic cache and fallback rules for reliable local demos.
+- Keep Ollama/OpenAI as optional providers for short safety-review summaries if desired later.
+- Select approximately 10-minute videos matching Upper Body, Lower Body, or Cardio categories.
 - Avoid blocking normal user actions on slow CPU-only LLM calls.
 
 Deliverables:
-- Agent service interfaces.
 - Video search service.
-- Safety validation step.
+- Deterministic safety metadata and optional LLM review hook.
 - Video session persistence.
 - Fallback mock/rule-based recommender mode for demos when no LLM is available.
 
@@ -156,19 +154,23 @@ Status: Complete.
 
 Implemented:
 - `POST /api/video-sessions/recommend` to create or return a cached video session for a time slot and workout category.
-- Automatic recommendation creation when a member reserves a slot/category pair for the first time.
+- Regular future reservations store the selected time slot and category without starting video curation.
+- Demo slots and regular slots whose time window has arrived can request a video recommendation and start/join a broadcast.
 - Cached reuse by `time_slot + workout_category` so normal dashboard reads do not trigger repeated AI work.
-- Provider-aware recommendation service that respects Ollama/OpenAI/mock configuration, can request a short LiteLLM safety review, and falls back to mock video metadata when YouTube/LLM work is unavailable.
-- Mock Trainer/Safety output stored in `video_sessions` as `agent_summary`, `safety_notes`, `provider`, and `status`.
+- Provider-aware recommendation service that can request a short LiteLLM safety review, and falls back to mock video metadata when YouTube/LLM work is unavailable.
+- Deterministic curator output stored in `video_sessions` as `agent_summary`, `safety_notes`, `provider`, and `status`.
 - Phase 5 ASGI tests covering recommendation creation, cache reuse, reservation-triggered creation, and guest restriction.
+- `video_cache_entries` table for long-term confirmed playable video cache.
+- Video Curator service that targets five cache entries per category, selects least-played videos first, and marks videos for replacement after three plays.
+- Admin endpoints for viewing the video cache and manually running the curator.
 
 Workflow rules:
 - User actions remain simple: register/login, choose slot, choose workout category, view broadcast, and submit feedback.
 - Schedule and capacity enforcement use deterministic database logic, not LLM reasoning.
-- Agents run only when a new video recommendation is needed.
+- Recommendation logic first uses confirmed playable cache entries where available.
 - Reuse cached approved videos by `slot + category` instead of recomputing on every request.
-- Safety Checker reviews new candidate videos before they become active sessions.
-- Save agent decisions in `video_sessions` so the dashboard reads stored state quickly.
+- Optional safety review summaries can be generated through LiteLLM, but core selection remains deterministic.
+- Save curator decisions in `video_sessions` so the dashboard reads stored state quickly.
 - If Ollama is slow or unavailable, fall back to mock/rule-based recommendation when enabled.
 
 ## Phase 6: Feedback Loop
@@ -176,7 +178,7 @@ Workflow rules:
 Goals:
 - Allow members to like or dislike workout videos.
 - Store feedback by video session.
-- Use feedback to influence future Trainer Agent selection.
+- Use feedback to influence future video selection.
 - Expose admin feedback summaries.
 
 Deliverables:
@@ -192,7 +194,7 @@ Implemented:
 - One feedback record per member and video session; repeated submissions update the existing record.
 - Feedback requires the member to have a matching reservation for the video session's time slot and workout category.
 - `GET /api/admin/feedback-summary` for admin-only likes, dislikes, total feedback, and score per video session.
-- Recommendation scoring signal is represented by `score = likes - dislikes` for later Trainer Agent use.
+- Recommendation scoring signal is represented by `score = likes - dislikes` for later deterministic curator use.
 - Phase 6 ASGI tests covering create/update, reservation requirement, allowed values, admin summary, guest restriction, and member restriction.
 
 ## Phase 7: Frontend Dashboard
@@ -220,7 +222,7 @@ Implemented:
 - Member dashboard connected to backend APIs for slots, categories, reservations, video sessions, and feedback.
 - Admin dashboard connected to occupancy and feedback summary APIs.
 - Desktop auth layout places the sign-in/register panel on the right side of the hero, with vertically stacked fields.
-- `Demo time slot` option in the member slot selector supports a quick demo reservation.
+- `Demo time slot` option in the member slot selector supports immediate video preparation and playback for local demos.
 - Workout broadcast panel embeds YouTube playback for recommended video sessions.
 - Local FastAPI CORS configuration for Vite development on `127.0.0.1:5173`.
 - Frontend build verification with `npm --prefix src/frontend run build`.
@@ -228,6 +230,7 @@ Implemented:
 - Broadcast panel remains empty until a session starts; playback is loaded only in the fullscreen/minimized broadcast player.
 - YouTube IFrame Player API confirms playback, reports player errors, and triggers a backend replacement video if playback does not begin within five seconds.
 - Fresh YouTube candidates are marked pending until playback is confirmed, so cached fallback uses browser-confirmed playable videos.
+- Confirmed cached videos are selected least-played first and are marked for replacement after three plays.
 - Guest-preview UI was removed to keep the demo flow focused on authenticated member/admin testing.
 
 Current limitations:
@@ -255,7 +258,7 @@ In scope:
 - Local full stack prototype.
 - SQLite persistence.
 - Simple auth suitable for demonstration.
-- AI-assisted video recommendation workflow.
+- Deterministic video recommendation workflow with optional AI-assisted review summaries.
 - Admin monitoring and override.
 
 Out of scope:

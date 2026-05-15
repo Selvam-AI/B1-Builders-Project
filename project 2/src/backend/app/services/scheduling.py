@@ -28,6 +28,11 @@ def create_reservation(db: Session, user: User, payload: ReservationCreate) -> S
         )
     )
     if existing is not None:
+        if existing.workout_category_id != category.id:
+            existing.workout_category_id = category.id
+            db.commit()
+            db.refresh(existing)
+            return existing
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Member already reserved this time slot.",
@@ -92,6 +97,7 @@ def list_slot_occupancy(db: Session) -> list[OccupancyRead]:
             current_occupancy=counts.get(slot.id, 0),
             remaining_capacity=max(slot.capacity - counts.get(slot.id, 0), 0),
             is_full=counts.get(slot.id, 0) >= slot.capacity,
+            is_demo=slot.is_demo,
         )
         for slot in slots
     ]

@@ -116,6 +116,36 @@ def test_member_cannot_duplicate_same_slot_reservation() -> None:
     assert duplicate_response.json()["detail"] == "Member already reserved this time slot."
 
 
+def test_member_can_change_category_for_existing_slot_reservation() -> None:
+    reset_seeded_db()
+    headers = asyncio.run(register_member("scheduler-category@example.com"))
+
+    first_response = asyncio.run(
+        request(
+            "POST",
+            "/api/reservations",
+            headers=headers,
+            json={"time_slot_id": 1, "workout_category_id": 1},
+        )
+    )
+    update_response = asyncio.run(
+        request(
+            "POST",
+            "/api/reservations",
+            headers=headers,
+            json={"time_slot_id": 1, "workout_category_id": 2},
+        )
+    )
+    mine_response = asyncio.run(request("GET", "/api/reservations/me", headers=headers))
+
+    assert first_response.status_code == 201
+    assert update_response.status_code == 201
+    assert update_response.json()["id"] == first_response.json()["id"]
+    assert update_response.json()["workout_category_id"] == 2
+    assert len(mine_response.json()) == 1
+    assert mine_response.json()[0]["workout_category_id"] == 2
+
+
 def test_slot_capacity_is_enforced() -> None:
     reset_seeded_db()
     set_slot_capacity(time_slot_id=1, capacity=1)
@@ -161,11 +191,12 @@ def test_admin_can_view_occupancy_summary() -> None:
 
     assert response.status_code == 200
     occupancy = response.json()
-    assert len(occupancy) == 12
-    assert occupancy[0]["time_slot_id"] == 1
-    assert occupancy[0]["current_occupancy"] == 1
-    assert occupancy[0]["remaining_capacity"] == 19
-    assert occupancy[0]["is_full"] is False
+    regular_occupancy = [slot for slot in occupancy if not slot["is_demo"]]
+    assert len(occupancy) == 13
+    assert len(regular_occupancy) == 12
+    assert regular_occupancy[0]["current_occupancy"] == 1
+    assert regular_occupancy[0]["remaining_capacity"] == 19
+    assert regular_occupancy[0]["is_full"] is False
 
 
 def test_member_cannot_view_admin_occupancy() -> None:

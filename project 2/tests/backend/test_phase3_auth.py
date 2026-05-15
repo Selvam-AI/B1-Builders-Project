@@ -150,7 +150,7 @@ def test_seeded_admin_can_access_admin_summary() -> None:
     assert summary_response.status_code == 200
     summary = summary_response.json()
     assert summary["admin"] == "admin@example.com"
-    assert summary["time_slots"] == 12
+    assert summary["time_slots"] == 13
 
 
 def test_admin_can_list_and_pause_member_accounts() -> None:

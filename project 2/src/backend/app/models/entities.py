@@ -32,6 +32,7 @@ class TimeSlot(Base):
     end_hour: Mapped[int] = mapped_column(Integer, nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     signups: Mapped[list["SlotSignup"]] = relationship(back_populates="time_slot")
     video_sessions: Mapped[list["VideoSession"]] = relationship(back_populates="time_slot")
@@ -47,6 +48,29 @@ class WorkoutCategory(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     video_sessions: Mapped[list["VideoSession"]] = relationship(back_populates="category")
+    video_cache_entries: Mapped[list["VideoCacheEntry"]] = relationship(back_populates="category")
+
+
+class VideoCacheEntry(Base):
+    __tablename__ = "video_cache_entries"
+    __table_args__ = (UniqueConstraint("youtube_video_id", name="uq_video_cache_youtube_video_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    workout_category_id: Mapped[int] = mapped_column(ForeignKey("workout_categories.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    youtube_video_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    youtube_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    duration_seconds: Mapped[int] = mapped_column(Integer, default=600, nullable=False)
+    provider: Mapped[str] = mapped_column(String(40), default="youtube", nullable=False)
+    status: Mapped[str] = mapped_column(String(40), default="pending_playback", nullable=False)
+    play_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    safety_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    curator_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_played_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+    category: Mapped["WorkoutCategory"] = relationship(back_populates="video_cache_entries")
 
 
 class SlotSignup(Base):
@@ -100,4 +124,3 @@ class Feedback(Base):
 
     user: Mapped["User"] = relationship(back_populates="feedback")
     video_session: Mapped["VideoSession"] = relationship(back_populates="feedback")
-

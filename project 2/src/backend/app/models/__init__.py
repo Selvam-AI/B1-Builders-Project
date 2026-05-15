@@ -5,6 +5,7 @@ from src.backend.app.models.entities import (
     SlotSignup,
     TimeSlot,
     User,
+    VideoCacheEntry,
     VideoSession,
     WorkoutCategory,
 )
@@ -14,7 +15,7 @@ __all__ = [
     "SlotSignup",
     "TimeSlot",
     "User",
+    "VideoCacheEntry",
     "VideoSession",
     "WorkoutCategory",
 ]
-

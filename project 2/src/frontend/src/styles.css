@@ -326,6 +326,16 @@ select {
   color: #aa211b;
 }
 
+.blue-button {
+  border-color: #1f6feb;
+  background: #1f6feb;
+  color: #fff;
+}
+
+.blue-button:hover {
+  background: #185abc;
+}
+
 .icon-text--liked {
   border-color: #178f54;
   background: #e9f8ef;
@@ -433,12 +443,41 @@ select {
   margin-bottom: 14px;
 }
 
-.video-player iframe {
+.video-player iframe,
+.video-player > div:first-child {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.video-player--validating > div:first-child {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-player__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  color: #f7f2ec;
+  background:
+    linear-gradient(120deg, rgba(242, 39, 28, 0.82), rgba(18, 20, 24, 0.92)),
+    #15171b;
+  padding: clamp(18px, 4vw, 48px);
+  text-align: center;
+}
+
+.video-player__overlay span {
+  max-width: 620px;
+  font-size: clamp(1.1rem, 3vw, 2.4rem);
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .video-player--empty {

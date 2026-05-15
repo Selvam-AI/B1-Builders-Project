@@ -2,6 +2,8 @@
 
 This document records prompts, AI suggestions, decisions, and implementation summaries for Project 2. It is maintained so evaluators can review how AI was used as a co-developer.
 
+Note: early prompts record an initial CrewAI-oriented design exploration. That direction was superseded in Prompt 24; the current implementation uses deterministic backend services with an optional LiteLLM review hook, not CrewAI.
+
 ## Prompt 1
 
 ### User Prompt
@@ -496,3 +498,66 @@ The user chose option 1 from the previous recommendation: investigate and resolv
 - Removed the embedded preview player from the broadcast card to avoid stale thumbnails or old unavailable videos before a new session starts.
 - Added a dedicated session-status panel between reservation information and the broadcast area for demo-start, loading, and recommendation messages.
 - Removed the red `Demo starts automatically` button text from the reservation box.
+
+## Prompt 24
+
+### User Prompt
+
+> ok that being the case, I will abandon the idea of using CrewAI, implement the video curator agent suggestions pending implementation, document the prompt, and update relavant documents. cleanup documentation that incorrectly assumes or suggests use of CrewAI.
+
+### Decision / Implementation Summary
+
+- Abandoned CrewAI for the current prototype.
+- Kept deterministic backend services as the primary architecture for reliability, speed, and testability.
+- Implemented a code-based Video Curator service instead of a CrewAI agent.
+- Added `video_cache_entries` to track confirmed playable videos, play count, replacement status, safety notes, and curator summaries.
+- Updated recommendation selection to prefer confirmed playable cached videos before live YouTube or mock fallback.
+- Added least-played video selection and marked cached videos for replacement after three plays.
+- Added frontend playback confirmation integration so only videos that actually play can become confirmed cache entries.
+- Added admin video-cache endpoints and daily scheduler configuration.
+- Removed CrewAI from Python requirements and `.env.example`.
+- Updated README, installation notes, and implementation plan to remove misleading CrewAI assumptions.
+
+## Prompt 25
+
+### User Prompt
+
+> Demo time slot vs regular time slot behaviour varies. Regular time slot allows user to change workout category for an already reserved time slot. When a regular time slot is Reserved (Reserve slot), the Session status must only indicate a time slot a category has been reserved. The video playback session does not begin until the time has arrived, so no video curator activity should take place, which should only take place if the user is logged in and the current system time is within the reserved time slot window.
+> You previously mention 'If you first reserved the demo slot as Upper Body, then later selected Lower Body, the backend said “already reserved this slot.” --> I believe this applied to Demo time slot. Allow Demo time slot to be a special, unlike other time slots, if a user has reserved Upperbody, the video loads and plays, say user exits session, clear the session and video associated with Demo time slot, allowing user to select another category and reserve again.
+
+### Decision / Implementation Summary
+
+- Changed reservation behavior so regular future-slot reservations only store the selected time slot and workout category.
+- Removed automatic backend video recommendation creation from the reservation endpoint.
+- Kept `Demo time slot` as the immediate-play exception for local demos.
+- Added frontend logic so regular slots only prepare/start video when the current system hour is inside the reserved slot window.
+- Kept the existing category-update behavior for an already reserved slot so a member can change workout category without creating a duplicate reservation.
+- Updated tests and documentation to reflect reservation-only regular slots versus immediate demo playback.
+
+## Prompt 26
+
+### User Prompt
+
+> add another workout category 'Cardio', video curator needs to update video cache, same rules apply.
+
+### Decision / Implementation Summary
+
+- Added `Cardio` as a seeded workout category.
+- Added a Cardio mock fallback recommendation for no-key/no-network demos.
+- Added a frontend Cardio fallback video ID for mock playback.
+- Video Curator cache logic applies automatically because it iterates over all active workout categories.
+- Updated backend tests and implementation plan references from two categories to three categories.
+
+## Prompt 27
+
+### User Prompt
+
+> I notice when I have not reserved regular time slot, 9 a.m to 10 a.m time slot appears in Your Reservation, the close proximity of this time slot to Demo time slot could offer a clue. But be assured the user did not select the regular time slot at all.
+
+### Decision / Implementation Summary
+
+- Confirmed the bug: the demo flow was borrowing the first regular slot ID, so demo reservations appeared as `9:00 AM - 10:00 AM`.
+- Added an explicit seeded `Demo time slot` with `is_demo=true`.
+- Kept regular 9am-9pm slots as normal non-demo slots.
+- Updated frontend logic so the demo option uses the explicit demo slot and the regular dropdown filters demo out.
+- Updated time-slot and occupancy schemas/tests to include the demo flag.

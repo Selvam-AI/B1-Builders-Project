@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.app.models import SlotSignup, User, VideoSession
 from src.backend.app.schemas import BroadcastSessionRead
+from src.backend.app.services.video_curator import record_cache_play
 
 
 @dataclass
@@ -48,6 +49,8 @@ def start_or_join_broadcast(
                 started_by_user_id=current_user.id,
             )
             _broadcast_sessions[video_session.id] = state
+            record_cache_play(db, video_session.youtube_video_id)
+            db.commit()
 
         if current_user.id in state.exited_user_ids:
             raise HTTPException(

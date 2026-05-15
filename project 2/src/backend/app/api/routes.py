@@ -5,7 +5,15 @@ from sqlalchemy.orm import Session
 from src.backend.app.core.config import settings
 from src.backend.app.core.database import get_db
 from src.backend.app.core.security import get_current_user, require_admin, require_member
-from src.backend.app.models import Feedback, SlotSignup, TimeSlot, User, VideoSession, WorkoutCategory
+from src.backend.app.models import (
+    Feedback,
+    SlotSignup,
+    TimeSlot,
+    User,
+    VideoCacheEntry,
+    VideoSession,
+    WorkoutCategory,
+)
 from src.backend.app.schemas import (
     ApiStatus,
     BroadcastSessionCreate,
@@ -22,6 +30,8 @@ from src.backend.app.schemas import (
     TokenResponse,
     UserRead,
     UserStatusUpdate,
+    VideoCacheEntryRead,
+    VideoCuratorRunRead,
     VideoPlaybackConfirmed,
     VideoPlaybackFailure,
     VideoRecommendationRequest,
@@ -47,6 +57,7 @@ from src.backend.app.services.scheduling import (
     list_member_reservations,
     list_slot_occupancy,
 )
+from src.backend.app.services.video_curator import maintain_video_cache
 
 router = APIRouter()
 
@@ -55,8 +66,8 @@ router = APIRouter()
 async def api_status() -> ApiStatus:
     return ApiStatus(
         status="ok",
-        phase="phase-6-feedback-loop",
-        message="FitHub AI backend feedback loop is ready.",
+        phase="phase-8-video-curator",
+        message="FitHub AI backend deterministic video curator is ready.",
         ai_llm_provider=settings.ai_llm_provider,
         ai_recommender_mode=settings.ai_recommender_mode,
         mock_fallback_enabled=settings.ai_allow_mock_fallback,
@@ -116,6 +127,31 @@ async def admin_feedback_summary(
     return list_feedback_summaries(db)
 
 
+@router.get("/admin/video-cache", response_model=list[VideoCacheEntryRead])
+async def admin_video_cache(
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> list[VideoCacheEntry]:
+    return list(
+        db.scalars(
+            select(VideoCacheEntry).order_by(
+                VideoCacheEntry.workout_category_id,
+                VideoCacheEntry.status,
+                VideoCacheEntry.play_count,
+                VideoCacheEntry.id,
+            )
+        ).all()
+    )
+
+
+@router.post("/admin/video-cache/curate", response_model=VideoCuratorRunRead)
+async def admin_run_video_curator(
+    db: Session = Depends(get_db),
+    _current_admin: User = Depends(require_admin),
+) -> VideoCuratorRunRead:
+    return VideoCuratorRunRead(**maintain_video_cache(db))
+
+
 @router.get("/admin/users", response_model=list[UserRead])
 async def admin_users(
     db: Session = Depends(get_db),
@@ -172,9 +208,7 @@ async def reserve_slot(
     db: Session = Depends(get_db),
     current_member: User = Depends(require_member),
 ) -> SlotSignup:
-    reservation = create_reservation(db, current_member, payload)
-    get_or_create_video_recommendation(db, payload.time_slot_id, payload.workout_category_id)
-    return reservation
+    return create_reservation(db, current_member, payload)
 
 
 @router.get("/reservations/me", response_model=list[ReservationRead])
@@ -291,6 +325,7 @@ async def list_time_slots(
             end_hour=slot.end_hour,
             capacity=slot.capacity,
             is_active=slot.is_active,
+            is_demo=slot.is_demo,
             current_occupancy=occupancy_counts.get(slot.id, 0),
         )
         for slot in slots

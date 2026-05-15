@@ -17,6 +17,11 @@ WORKOUT_CATEGORIES = [
         "slug": "lower-body",
         "description": "General lower body strength and mobility workouts.",
     },
+    {
+        "name": "Cardio",
+        "slug": "cardio",
+        "description": "Beginner-friendly cardio and low-impact conditioning workouts.",
+    },
 ]
 
 
@@ -51,6 +56,17 @@ def seed_time_slots(db: Session) -> None:
                 end_hour=start_hour + 1,
                 capacity=20,
                 is_active=True,
+            )
+        )
+    if -1 not in existing_hours:
+        db.add(
+            TimeSlot(
+                label="Demo time slot",
+                start_hour=-1,
+                end_hour=-1,
+                capacity=20,
+                is_active=True,
+                is_demo=True,
             )
         )
 

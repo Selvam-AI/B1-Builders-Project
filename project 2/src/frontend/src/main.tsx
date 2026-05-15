@@ -60,13 +60,17 @@ type UserRead = {
   name: string;
   email: string | null;
   role: Role;
+  is_active: boolean;
 };
 
 type TimeSlot = {
   id: number;
   label: string;
+  start_hour: number;
+  end_hour: number;
   capacity: number;
   current_occupancy: number;
+  is_demo: boolean;
 };
 
 type WorkoutCategory = {
@@ -94,6 +98,16 @@ type VideoSession = {
   status: string;
   safety_notes: string | null;
   agent_summary: string | null;
+};
+
+type VideoCacheEntry = {
+  id: number;
+  workout_category_id: number;
+  title: string;
+  youtube_video_id: string;
+  status: string;
+  play_count: number;
+  curator_summary: string | null;
 };
 
 type Occupancy = {
@@ -167,6 +181,7 @@ function App() {
   const [occupancy, setOccupancy] = useState<Occupancy[]>([]);
   const [feedbackSummary, setFeedbackSummary] = useState<FeedbackSummary[]>([]);
   const [adminUsers, setAdminUsers] = useState<UserRead[]>([]);
+  const [videoCache, setVideoCache] = useState<VideoCacheEntry[]>([]);
   const [activeBroadcast, setActiveBroadcast] = useState<VideoSession | null>(null);
   const [broadcastCountdown, setBroadcastCountdown] = useState<number | null>(null);
   const [broadcastPlaying, setBroadcastPlaying] = useState(false);
@@ -177,8 +192,14 @@ function App() {
   const replacementAttemptsRef = useRef(0);
   const playbackConfirmedRef = useRef<Record<number, string>>({});
 
-  const authHeaders = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
+  const authHeaders = useMemo<Record<string, string>>(
+    () => {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      return headers;
+    },
     [token],
   );
 
@@ -284,18 +305,21 @@ function App() {
       const currentUser = await api<UserRead>("/api/auth/me", {}, activeToken);
       setUser(currentUser);
       if (activeRole === "admin" || currentUser.role === "admin") {
-        const [adminOccupancy, summaries, users] = await Promise.all([
+        const [adminOccupancy, summaries, users, cacheEntries] = await Promise.all([
           api<Occupancy[]>("/api/admin/occupancy", {}, activeToken),
           api<FeedbackSummary[]>("/api/admin/feedback-summary", {}, activeToken),
           api<UserRead[]>("/api/admin/users", {}, activeToken),
+          api<VideoCacheEntry[]>("/api/admin/video-cache", {}, activeToken),
         ]);
         setOccupancy(adminOccupancy);
         setFeedbackSummary(summaries);
         setAdminUsers(users);
+        setVideoCache(cacheEntries);
         debugLog("Admin dashboard data loaded.", {
           occupancyRows: adminOccupancy.length,
           feedbackSummaryRows: summaries.length,
           userRows: users.length,
+          videoCacheRows: cacheEntries.length,
         });
       } else {
         const [nextSlots, nextCategories, nextReservations, nextVideos] = await Promise.all([
@@ -382,28 +406,33 @@ function App() {
       setSessionStatus(
         useDemoSlot
           ? "Demo session selected. Looking for a playable workout video."
-          : "Reservation selected. Preparing workout recommendation.",
+          : "Reservation selected.",
       );
-      try {
-        await api<Reservation>("/api/reservations", {
-          method: "POST",
-          headers: authHeaders,
-          body: JSON.stringify({
-            time_slot_id: slotId,
-            workout_category_id: workoutCategoryId,
-          }),
-        });
-        debugLog("Reservation created.", { slotId, workoutCategoryId });
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : "Reservation failed";
-        if (!useDemoSlot || !detail.toLowerCase().includes("already")) {
-          throw error;
-        }
-        debugLog("Demo reservation already exists. Joining existing broadcast.", {
-          slotId,
-          workoutCategoryId,
-          detail,
-        });
+      const reservation = await api<Reservation>("/api/reservations", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          time_slot_id: slotId,
+          workout_category_id: workoutCategoryId,
+        }),
+      });
+      debugLog("Reservation created or updated.", { slotId, workoutCategoryId, reservation });
+
+      if (!useDemoSlot && !isSlotCurrentlyActive(slots, slotId)) {
+        setActiveBroadcast(null);
+        setBroadcastSession(null);
+        setBroadcastPlaying(false);
+        setBroadcastCountdown(null);
+        setBroadcastMinimized(false);
+        setSessionStatus(
+          `${labelForSlot(slots, slotId)} reserved for ${labelForCategory(
+            categories,
+            workoutCategoryId,
+          )}. Broadcast will be prepared when the slot time arrives.`,
+        );
+        setMessage("Reservation confirmed");
+        await refreshApp();
+        return;
       }
 
       setSessionStatus("Checking whether this session is already in progress.");
@@ -429,7 +458,7 @@ function App() {
       setSessionStatus(
         `${video.provider} video ready: ${video.title || "Workout broadcast"}. Opening broadcast player.`,
       );
-      if (useDemoSlot) {
+      if (useDemoSlot || isSlotCurrentlyActive(slots, slotId)) {
         await beginBroadcast(video);
       }
       debugLog("Reservation flow completed. Backend created or reused video recommendation.", {
@@ -557,11 +586,20 @@ function App() {
     try {
       await api<void>(`/api/reservations/${id}`, { method: "DELETE", headers: authHeaders });
       debugLog("Reservation cancelled.", { reservationId: id });
+      setReservations((current) => current.filter((reservation) => reservation.id !== id));
+      setActiveBroadcast(null);
+      setBroadcastSession(null);
+      setBroadcastPlaying(false);
+      setBroadcastCountdown(null);
+      setBroadcastMinimized(false);
+      setSessionStatus("Reservation cancelled.");
       setMessage("Reservation cancelled");
       await refreshApp();
     } catch (error) {
       debugLog("Cancellation failed.", error instanceof Error ? error.message : error);
-      setMessage(error instanceof Error ? error.message : "Cancellation failed");
+      const detail = error instanceof Error ? error.message : "Cancellation failed";
+      setSessionStatus(detail);
+      setMessage(detail);
     } finally {
       setBusy(false);
     }
@@ -622,7 +660,7 @@ function App() {
     clearSession("Signed out");
   }
 
-function clearSession(nextMessage: string) {
+  function clearSession(nextMessage: string) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
     setToken("");
@@ -697,6 +735,25 @@ function clearSession(nextMessage: string) {
     }
   }
 
+  async function runVideoCurator() {
+    setBusy(true);
+    try {
+      const result = await api<{ created_pending: number; categories: number }>(
+        "/api/admin/video-cache/curate",
+        {
+          method: "POST",
+          headers: authHeaders,
+        },
+      );
+      setMessage(`Curator checked ${result.categories} categories`);
+      await refreshApp();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to run video curator");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const activeBroadcastList = activeBroadcast ? [activeBroadcast] : [];
 
   return (
@@ -725,7 +782,7 @@ function clearSession(nextMessage: string) {
             <p className="eyebrow">AI-assisted social workout club</p>
             <h1>Reserve. Move. Improve.</h1>
             <p>
-              A single-page dashboard for members to book workout slots, receive safe AI-selected
+              A single-page dashboard for members to book workout slots, receive curated workout
               sessions, and send feedback that improves future recommendations.
             </p>
             <div className="hero__actions" aria-live="polite">
@@ -750,9 +807,11 @@ function clearSession(nextMessage: string) {
           occupancy={occupancy}
           feedbackSummary={feedbackSummary}
           users={adminUsers}
+          videoCache={videoCache}
           updateUserStatus={updateUserStatus}
           deleteUser={deleteUser}
-          refresh={refreshBroadcasts}
+          runVideoCurator={runVideoCurator}
+          refresh={() => refreshApp()}
           busy={busy}
         />
       ) : token ? (
@@ -908,7 +967,7 @@ function MemberDashboard({
             Time slot
             <select value={selectedSlot} onChange={(event) => setSelectedSlot(event.target.value)}>
               <option value="demo-now">Demo time slot (Starts now)</option>
-              {slots.map((slot) => (
+              {slots.filter((slot) => !slot.is_demo).map((slot) => (
                 <option key={slot.id} value={slot.id}>
                   {slot.label} - {slot.current_occupancy}/{slot.capacity}
                 </option>
@@ -1153,6 +1212,7 @@ function VideoPlayer({
   const syncOffsetRef = useRef(syncOffsetSeconds);
   const onPlaybackFailureRef = useRef(onPlaybackFailure);
   const onPlaybackConfirmedRef = useRef(onPlaybackConfirmed);
+  const [validationMessage, setValidationMessage] = useState("Video is buffering. Please wait.");
   const playerElementId = useRef(`youtube-player-${video.id}-${Math.random().toString(36).slice(2)}`);
   const youtubeVideoId = useMemo(() => playableYouTubeVideoId(video), [
     video.youtube_video_id,
@@ -1217,6 +1277,7 @@ function VideoPlayer({
     if (!youtubeVideoId) return;
     let cancelled = false;
 
+    setValidationMessage("Video is buffering. Please wait.");
     playbackStartedRef.current = false;
     failureReportedRef.current = false;
 
@@ -1227,6 +1288,7 @@ function VideoPlayer({
         window.clearTimeout(healthTimerRef.current);
         healthTimerRef.current = null;
       }
+      setValidationMessage("The selected video did not start. Finding another video.");
       onPlaybackFailureRef.current(reason);
     };
 
@@ -1280,6 +1342,7 @@ function VideoPlayer({
               if (event.data === window.YT?.PlayerState?.PLAYING) {
                 playbackStartedRef.current = true;
                 clearHealthTimer();
+                setValidationMessage("");
                 onPlaybackConfirmedRef.current();
               }
             },
@@ -1315,8 +1378,14 @@ function VideoPlayer({
   }
 
   return (
-    <div className="video-player">
+    <div className={validationMessage ? "video-player video-player--validating" : "video-player"}>
       <div id={playerElementId.current} title={video.title || "Workout video"} />
+      {validationMessage ? (
+        <div className="video-player__overlay" aria-live="polite">
+          <Play size={28} />
+          <span>{validationMessage}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1325,6 +1394,7 @@ function playableYouTubeVideoId(video: VideoSession) {
   const fallbackByCategory: Record<number, string> = {
     1: "HRvFxrFGqA4",
     2: "YyBcMVQylas",
+    3: "VWj8ZxCxrYk",
   };
   return (
     video.youtube_video_id && !video.youtube_video_id.startsWith("mock-")
@@ -1383,7 +1453,15 @@ function videoDebugInfo(video: VideoSession) {
 }
 
 function demoSlotId(slots: TimeSlot[]) {
-  return slots[0]?.id || 0;
+  return slots.find((slot) => slot.is_demo)?.id || 0;
+}
+
+function isSlotCurrentlyActive(slots: TimeSlot[], id: number) {
+  const slot = slots.find((item) => item.id === id);
+  if (!slot) return false;
+  if (slot.is_demo) return true;
+  const currentHour = new Date().getHours();
+  return currentHour >= slot.start_hour && currentHour < slot.end_hour;
 }
 
 function AdminDashboard({
@@ -1391,8 +1469,10 @@ function AdminDashboard({
   occupancy,
   feedbackSummary,
   users,
+  videoCache,
   updateUserStatus,
   deleteUser,
+  runVideoCurator,
   refresh,
   busy,
 }: {
@@ -1400,8 +1480,10 @@ function AdminDashboard({
   occupancy: Occupancy[];
   feedbackSummary: FeedbackSummary[];
   users: UserRead[];
+  videoCache: VideoCacheEntry[];
   updateUserStatus: (userId: number, isActive: boolean) => void;
   deleteUser: (userId: number) => void;
+  runVideoCurator: () => void;
   refresh: () => void;
   busy: boolean;
 }) {
@@ -1462,6 +1544,47 @@ function AdminDashboard({
                           </button>
                         </div>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="tool-panel tool-panel--wide">
+          <div className="panel-title">
+            <Activity size={20} />
+            <h3>Video cache</h3>
+            <div className="button-row">
+              <button className="ghost-button blue-button" onClick={runVideoCurator} disabled={busy}>
+                Run curator
+              </button>
+              <button className="ghost-button" onClick={refresh} disabled={busy}>
+                Refresh
+              </button>
+            </div>
+          </div>
+          {videoCache.length === 0 ? (
+            <p className="muted">No confirmed or pending cache entries yet.</p>
+          ) : (
+            <div className="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Video</th>
+                    <th>Status</th>
+                    <th>Plays</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {videoCache.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.workout_category_id}</td>
+                      <td>{entry.title}</td>
+                      <td>{entry.status}</td>
+                      <td>{entry.play_count}</td>
                     </tr>
                   ))}
                 </tbody>

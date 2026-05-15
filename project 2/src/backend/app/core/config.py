@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     seed_admin: bool = Field(default=True, alias="SEED_ADMIN")
     admin_email: str = Field(default="admin@example.com", alias="ADMIN_EMAIL")
     admin_password: str = Field(default="admin123", alias="ADMIN_PASSWORD")
+    video_curator_enabled: bool = Field(default=True, alias="VIDEO_CURATOR_ENABLED")
+    video_cache_target_per_category: int = Field(default=5, alias="VIDEO_CACHE_TARGET_PER_CATEGORY")
+    video_cache_max_play_count: int = Field(default=3, alias="VIDEO_CACHE_MAX_PLAY_COUNT")
+    video_curator_interval_hours: int = Field(default=24, alias="VIDEO_CURATOR_INTERVAL_HOURS")
 
     @field_validator("debug", mode="before")
     @classmethod

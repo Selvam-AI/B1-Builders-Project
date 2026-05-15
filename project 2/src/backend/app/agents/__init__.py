@@ -1,2 +1,4 @@
-"""CrewAI agent package for Trainer, Safety Checker, Schedule, and Admin Assistant agents."""
+"""Placeholder package for optional future AI orchestration.
 
+The current prototype uses deterministic backend services instead of CrewAI agents.
+"""

@@ -11,9 +11,9 @@ Available:
 - Node.js 18.19.1
 - npm 9.2.0
 
-Still needed for Ollama reasoning:
+Optional for local LLM review summaries:
 
-- Ollama
+- Ollama, if `AI_RECOMMENDER_MODE=llm`
 - Local model, currently `llama3`
 
 Optional:
@@ -29,15 +29,15 @@ Installed into `.venv`:
 - SQLAlchemy / SQLite support
 - Pydantic / Pydantic Settings
 - Authentication helpers
-- CrewAI / LiteLLM
-- Ollama as the default local LLM provider
+- LiteLLM
+- Ollama as the optional local LLM provider
 - OpenAI as an optional paid LLM provider
 - YouTube API client
 - pytest / httpx
 
-## Local LLM Setup
+## Optional Local LLM Setup
 
-Default AI reasoning provider:
+Optional safety-review provider:
 
 - Ollama
 - Model setting: `MODEL=ollama/llama3`
@@ -57,7 +57,7 @@ If `ollama serve` returns `bind: address already in use`, Ollama is usually alre
 curl http://127.0.0.1:11434/api/tags
 ```
 
-CPU-only mode is acceptable for this prototype, but responses can be slow. Keep prompts short, cache selected video recommendations by slot/category, and keep mock fallback enabled for demo reliability.
+CPU-only mode is acceptable for optional summaries, but responses can be slow. The video curator and scheduling rules are deterministic and do not require Ollama.
 
 OpenAI remains optional. To switch later, set:
 
@@ -108,14 +108,16 @@ sudo apt install -y sqlitebrowser
 
 ## Debug Notes
 
-CrewAI needs workspace-local storage in this environment:
+CrewAI was removed from the current implementation. LiteLLM remains pinned at `1.82.6` only for optional Ollama/OpenAI safety-review summaries.
+
+The deterministic Video Curator is configured with:
 
 ```bash
-CREWAI_STORAGE_DIR=.crewai-storage
-CREWAI_TRACING_ENABLED=false
+VIDEO_CURATOR_ENABLED=true
+VIDEO_CACHE_TARGET_PER_CATEGORY=5
+VIDEO_CACHE_MAX_PLAY_COUNT=3
+VIDEO_CURATOR_INTERVAL_HOURS=24
 ```
-
-LiteLLM is pinned at `1.82.6` because newer `1.83.x` releases conflict with the installed CrewAI/OpenAI dependency combination.
 
 ## Local Admin Account
 

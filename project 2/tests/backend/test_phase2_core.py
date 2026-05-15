@@ -50,25 +50,33 @@ def test_status_reports_current_backend_phase() -> None:
     payload = asyncio.run(get_json("/api/status"))
 
     assert payload["status"] == "ok"
-    assert payload["phase"] == "phase-6-feedback-loop"
+    assert payload["phase"] == "phase-8-video-curator"
     assert payload["ai_llm_provider"] == "ollama"
     assert payload["mock_fallback_enabled"] is True
 
 
 def test_seeded_time_slots_are_hourly_from_9am_to_9pm() -> None:
     slots = asyncio.run(get_json("/api/time-slots", requires_auth=True))
+    regular_slots = [slot for slot in slots if not slot["is_demo"]]
 
-    assert len(slots) == 12
-    assert slots[0]["label"] == "9:00 AM - 10:00 AM"
-    assert slots[-1]["label"] == "8:00 PM - 9:00 PM"
-    assert all(slot["capacity"] == 20 for slot in slots)
+    assert len(slots) == 13
+    assert slots[0]["label"] == "Demo time slot"
+    assert slots[0]["is_demo"] is True
+    assert len(regular_slots) == 12
+    assert regular_slots[0]["label"] == "9:00 AM - 10:00 AM"
+    assert regular_slots[-1]["label"] == "8:00 PM - 9:00 PM"
+    assert all(slot["capacity"] == 20 for slot in regular_slots)
     assert all(slot["current_occupancy"] == 0 for slot in slots)
 
 
 def test_seeded_workout_categories_match_project_scope() -> None:
     categories = asyncio.run(get_json("/api/workout-categories", requires_auth=True))
 
-    assert [category["slug"] for category in categories] == ["upper-body", "lower-body"]
+    assert [category["slug"] for category in categories] == [
+        "upper-body",
+        "lower-body",
+        "cardio",
+    ]
 
 
 def test_video_sessions_start_empty() -> None:

@@ -64,6 +64,14 @@ async def reserve_and_get_video_session(headers: dict[str, str]) -> int:
     )
     assert reserve_response.status_code == 201
 
+    recommend_response = await request(
+        "POST",
+        "/api/video-sessions/recommend",
+        headers=headers,
+        json={"time_slot_id": 1, "workout_category_id": 1},
+    )
+    assert recommend_response.status_code == 200
+
     sessions_response = await request("GET", "/api/video-sessions", headers=headers)
     assert sessions_response.status_code == 200
     sessions = sessions_response.json()

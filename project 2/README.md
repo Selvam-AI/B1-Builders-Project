@@ -1,12 +1,12 @@
 # FitHub AI
 
-AI-assisted social workout club portal for team and organisational use.
+Deterministic social workout club portal for team and organisational use, with optional AI-assisted video review.
 
 ## Overview
 
-FitHub AI is Project 2 for the B1 Builders Programme: a full stack browser dashboard prototype where members reserve hourly workout slots, join shared workout sessions, watch AI-selected workout videos, and give feedback that improves later recommendations.
+FitHub AI is Project 2 for the B1 Builders Programme: a full stack browser dashboard prototype where members reserve hourly workout slots, join shared workout sessions, watch curated workout videos, and give feedback that improves later recommendations.
 
-The project is designed to demonstrate AI-assisted full stack development, multi-user shared-resource coordination, prompt-driven planning, and responsible use of agent workflows.
+The project is designed to demonstrate AI-assisted development practice, multi-user shared-resource coordination, prompt-driven planning, and deterministic backend services.
 
 ### Problem
 
@@ -17,7 +17,7 @@ The project is designed to demonstrate AI-assisted full stack development, multi
 ### Outcome
 
 - Planned prototype for member registration, login, time-slot reservation, authenticated workout broadcast, feedback, and admin monitoring.
-- AI workflow design using CrewAI-style agents for training video selection, safety review, scheduling, and admin summaries.
+- Deterministic video-curation workflow for training video selection, playback confirmation, cache rotation, scheduling, and admin summaries.
 - Scaffolded repository ready for incremental implementation with React/Vite frontend, FastAPI backend, SQLite persistence, and SQLAlchemy models.
 
 ---
@@ -29,7 +29,7 @@ The first implementation target is a browser dashboard with the following user j
 1. A visitor can reach the landing page but must register or sign in before accessing the dashboard or workout broadcast.
 2. A member registers or signs in with name, email, age, and preferred workout slots.
 3. The member selects an hourly slot between 9am and 9pm, subject to a 20-member capacity limit.
-4. The AI workflow selects a safe, approximately 10-minute workout video for the active category.
+4. The video curator selects a safe, approximately 10-minute workout video for the active category.
 5. Members like or dislike the video after the session.
 6. An admin views slot occupancy, active video sessions, and feedback summaries.
 
@@ -50,8 +50,7 @@ Screenshots, GIFs, or a demo video will be added under `assets/screenshots/` as 
 - Python and FastAPI for REST APIs.
 - SQLite for local prototype storage.
 - SQLAlchemy for ORM-based database access.
-- CrewAI for multi-agent orchestration.
-- Ollama for free local agent reasoning by default.
+- LiteLLM/Ollama for optional local safety-review summaries.
 - OpenAI API as an optional paid LLM provider.
 - YouTube Data API v3 for workout video search and metadata.
 
@@ -61,11 +60,11 @@ Screenshots, GIFs, or a demo video will be added under `assets/screenshots/` as 
 
 - Codex is used as an AI co-developer for repository scaffolding, planning, documentation, implementation, review, and debugging.
 - AI work is documented in `docs/PROMPTS_IMPLEMENTATION.md` so evaluators can see the prompts, suggestions, decisions, and implementation summaries.
-- Key agents planned for the application:
-  - Trainer Agent: selects workout videos and reviews feedback.
-  - Safety Checker Agent: rejects unsafe, unrelated, or overly intense videos.
-  - Schedule Agent: monitors occupancy and enforces slot capacity.
-  - Admin Assistant Agent: generates operational summaries for admins.
+- CrewAI was considered earlier, but the implementation now keeps core behaviour deterministic for reliability, testability, and faster local demos.
+- The main service roles are:
+  - Member Experience services: auth, reservations, broadcast join/exit, and feedback.
+  - Video Curator service: deterministic YouTube candidate search, playable cache, least-played selection, play-count rotation, and playback confirmation.
+  - Admin Oversight services: occupancy, feedback summaries, member management, and video-cache visibility.
 - Review points will focus on whether AI output is safe, explainable, scoped to the prototype, and aligned with the B1 Builders evaluation requirements.
 
 ---
@@ -97,9 +96,10 @@ Then fill in API keys for YouTube and optional OpenAI use.
 
 Set `DEBUG=true` during local demos when you want `[FitHub AI]` diagnostic logs in the backend terminal and browser console. Set it to `false` when you want quieter output.
 
-By default, the AI reasoning path is configured for local Ollama:
+Optional LLM review can be configured for local Ollama:
 
 ```bash
+AI_RECOMMENDER_MODE=llm
 AI_LLM_PROVIDER=ollama
 MODEL=ollama/llama3
 BASE_URL=http://localhost:11434
@@ -208,12 +208,15 @@ Slot scheduling:
 AI video recommendations:
 
 - The backend creates or returns a cached video session for each `time_slot + workout_category` pair.
-- Reserving a slot automatically ensures a video recommendation exists for that slot/category.
+- Reserving a regular future slot only stores the reservation and category; video preparation waits until the slot time arrives.
+- The `Demo time slot` is the immediate-play exception for local demonstration.
 - When `YOUTUBE_API_KEY` exists, the backend searches YouTube with `videoEmbeddable=true` and stores a real embeddable video.
-- The recommender attempts a fresh embeddable YouTube search first, then falls back to a previously approved cached embeddable video, then uses mock fallback for no-key or no-network demos.
-- Fresh YouTube candidates are marked pending until the browser confirms playback through the YouTube IFrame Player API; only confirmed videos are reused as cached fallback videos.
-- Ollama is the default LLM provider, and OpenAI remains optional.
-- When provider settings are available, the recommendation service can request a short LiteLLM safety review before saving the video session.
+- The deterministic Video Curator maintains `video_cache_entries`, targeting five confirmed playable videos per workout category.
+- Confirmed cache videos are selected least-played first.
+- A cached video is marked for replacement after three plays, but it remains available until a replacement is found and confirmed.
+- Fresh YouTube candidates are marked pending until the browser confirms playback through the YouTube IFrame Player API; only confirmed videos are reused as playable cache videos.
+- If the confirmed cache is empty, the recommender can search YouTube, reuse older approved session videos, or use mock fallback for no-key/no-network demos.
+- Ollama/OpenAI via LiteLLM remain optional for short safety-review summaries; CrewAI is not used in the current implementation.
 - Recommendation decisions are stored in `video_sessions` with provider, status, safety notes, and agent summary fields.
 
 Broadcast session sync:
@@ -238,6 +241,7 @@ Frontend dashboard:
 - Member and admin views are role-aware after login.
 - The sign-in/register panel is placed in the hero on desktop and stacks below the hero copy on smaller screens.
 - The member slot selector includes a `Demo time slot` option for quick local demonstration.
+- Demo reservations use a separate seeded demo slot and are displayed as `Demo time slot`, not as a regular 9am booking.
 - The workout broadcast panel stays empty until an active broadcast starts; playback happens in the fullscreen/minimized broadcast player.
 
 Known limitations and unresolved issues:
@@ -245,7 +249,7 @@ Known limitations and unresolved issues:
 - Broadcast session state is stored in backend runtime memory for the prototype. Restarting the backend clears active broadcast sessions.
 - The broadcast sync loop is demo-grade. It periodically corrects playback offset, but it is not production-grade real-time streaming.
 - YouTube can still reject an embed at playback time even after `videoEmbeddable=true`; the prototype now attempts replacement, but availability still depends on YouTube/network access.
-- A separate long-term video cache table is deferred; the prototype uses `video_sessions.provider` and playback confirmation status for cached fallback decisions.
+- The video cache is prototype-grade and depends on frontend playback confirmation; server-side YouTube metadata alone cannot prove browser playback.
 - External host/LAN access was not tested in this development VM. It should work when the evaluator's VM or host has bridged networking or port forwarding configured for ports `5173` and `8000`.
 
 ---
@@ -262,7 +266,6 @@ project 2/
 ├── src/
 │   ├── backend/
 │   │   └── app/
-│   │       ├── agents/
 │   │       ├── api/
 │   │       ├── core/
 │   │       ├── models/
@@ -279,7 +282,7 @@ project 2/
 └── data/
 ```
 
-- `src/backend/` contains the FastAPI application, database models, services, and AI agent orchestration.
+- `src/backend/` contains the FastAPI application, database models, deterministic services, and optional LLM review hooks.
 - `src/frontend/` contains the React/Vite dashboard application.
 - `tests/` contains backend and frontend tests.
 - `docs/` contains project planning, implementation notes, and AI prompt documentation.
@@ -297,4 +300,4 @@ Initialize the local SQLite schema and seed data without starting the API:
 
 ## Reflection
 
-This scaffold prioritises a small, demonstrable prototype rather than enterprise architecture. The main design decision is to keep the project easy to explain during interview assessment while still showing a complete full stack path: frontend views, backend APIs, database persistence, AI agent reasoning, external video search, and evaluator-visible prompt documentation.
+This scaffold prioritises a small, demonstrable prototype rather than enterprise architecture. The main design decision is to keep the project easy to explain during interview assessment while still showing a complete full stack path: frontend views, backend APIs, database persistence, deterministic service design, external video search, and evaluator-visible prompt documentation.

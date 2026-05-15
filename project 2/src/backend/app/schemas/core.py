@@ -23,6 +23,7 @@ class TimeSlotRead(BaseModel):
     end_hour: int
     capacity: int
     is_active: bool
+    is_demo: bool
     current_occupancy: int
 
 
@@ -50,6 +51,29 @@ class VideoSessionRead(BaseModel):
     status: str
     safety_notes: str | None
     agent_summary: str | None
+
+
+class VideoCacheEntryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    workout_category_id: int
+    title: str
+    youtube_video_id: str
+    youtube_url: str
+    duration_seconds: int
+    provider: str
+    status: str
+    play_count: int
+    safety_notes: str | None
+    curator_summary: str | None
+    last_played_at: datetime | None
+    confirmed_at: datetime | None
+
+
+class VideoCuratorRunRead(BaseModel):
+    created_pending: int
+    categories: int
 
 
 class VideoRecommendationRequest(BaseModel):
@@ -137,3 +161,4 @@ class OccupancyRead(BaseModel):
     current_occupancy: int
     remaining_capacity: int
     is_full: bool
+    is_demo: bool

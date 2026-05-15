@@ -10,6 +10,10 @@ from sqlalchemy.orm import Session
 
 from src.backend.app.core.config import settings
 from src.backend.app.models import TimeSlot, VideoSession, WorkoutCategory
+from src.backend.app.services.video_curator import (
+    confirm_session_video_in_cache,
+    select_cached_candidate,
+)
 
 logger = logging.getLogger("fithub.recommendations")
 
@@ -40,8 +44,8 @@ MOCK_CANDIDATES = {
         provider="mock",
         safety_notes="Low-impact upper-body routine suitable for a general prototype audience.",
         agent_summary=(
-            "Trainer Agent selected an upper-body beginner workout. "
-            "Safety Checker approved it because the routine is short, simple, and not high intensity."
+            "Deterministic curator selected an upper-body beginner workout because the routine is "
+            "short, simple, and not high intensity."
         ),
     ),
     "lower-body": RecommendationCandidate(
@@ -52,8 +56,20 @@ MOCK_CANDIDATES = {
         provider="mock",
         safety_notes="Low-impact lower-body routine suitable for a general prototype audience.",
         agent_summary=(
-            "Trainer Agent selected a lower-body beginner workout. "
-            "Safety Checker approved it because the routine is short, simple, and not high intensity."
+            "Deterministic curator selected a lower-body beginner workout because the routine is "
+            "short, simple, and not high intensity."
+        ),
+    ),
+    "cardio": RecommendationCandidate(
+        title="10 Minute Beginner Cardio Workout",
+        youtube_video_id="VWj8ZxCxrYk",
+        youtube_url="https://www.youtube.com/watch?v=VWj8ZxCxrYk",
+        duration_seconds=600,
+        provider="mock",
+        safety_notes="Beginner-friendly cardio routine suitable for a general prototype audience.",
+        agent_summary=(
+            "Deterministic curator selected a beginner cardio workout because the routine is "
+            "short, simple, and suitable for low-impact conditioning."
         ),
     ),
 }
@@ -155,6 +171,14 @@ def select_recommendation_candidate(
     excluded_video_ids: set[str] | None = None,
 ) -> RecommendationCandidate:
     excluded_video_ids = excluded_video_ids or set()
+    cached_candidate = select_cached_candidate(db, category, excluded_video_ids)
+    if cached_candidate is not None:
+        debug_print(
+            "Confirmed video-cache candidate selected "
+            f"video_id={cached_candidate.youtube_video_id}"
+        )
+        return cached_candidate
+
     if should_use_mock_recommendation():
         logger.info(
             "Mock recommendation selected before YouTube search: mode=%s youtube_key_present=%s fallback=%s",
@@ -297,6 +321,7 @@ def confirm_video_playback(
     if video_session.provider == "youtube-pending":
         video_session.provider = "youtube"
     video_session.status = "approved"
+    confirm_session_video_in_cache(db, video_session)
     db.commit()
     db.refresh(video_session)
     debug_print(
@@ -454,8 +479,8 @@ def youtube_recommendation(
                         "workout content before prototype safety review."
                     ),
                     agent_summary=(
-                        f"Trainer Agent selected an embeddable {category.name} workout candidate. "
-                        "Safety Checker approved it for prototype use."
+                        f"Deterministic curator selected an embeddable {category.name} workout "
+                        "candidate for prototype use."
                     ),
                 ),
             )
@@ -563,7 +588,7 @@ def mock_recommendation(category: WorkoutCategory) -> RecommendationCandidate:
         provider="mock",
         safety_notes="Beginner-friendly routine selected by the mock fallback.",
         agent_summary=(
-            f"Trainer Agent selected a {category.name} workout through mock fallback. "
-            "Safety Checker approved it for prototype use."
+            f"Deterministic curator selected a {category.name} workout through mock fallback "
+            "for prototype use."
         ),
     )
