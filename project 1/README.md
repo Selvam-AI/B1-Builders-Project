@@ -157,6 +157,10 @@ pip install -e .
 
 Create or update `.env`:
 
+```bash
+cp .env.example .env
+```
+
 ```text
 GEMINI_API_KEY=
 OPENAI_API_KEY=
