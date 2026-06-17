@@ -53,6 +53,11 @@ Open the dashboard:
 http://127.0.0.1:8000/dashboard
 ```
 
+Demo walkthrough materials showing how the solution works from the user perspective, covering the main steps from start to finish:
+
+- [Project 1 demo slides (ODP)](docs/project1_demo.odp)
+- [Project 1 demo slides (PDF)](docs/project1_demo.pdf)
+
 What the demo is showing:
 
 - News is ingested from configured sources such as Guardian, NewsAPI, or RSS.
