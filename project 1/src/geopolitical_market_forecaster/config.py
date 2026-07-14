@@ -20,6 +20,9 @@ class Settings(BaseModel):
     database_url: str = "sqlite:///data/geopolitical_market_forecaster.db"
     default_region: str = "Middle East"
     default_news_query: str = "Middle East geopolitics oil shipping markets"
+    query_energy: str | None = None
+    query_shipping: str | None = None
+    query_geopolitics: str | None = None
     ingest_page_size: int = 10
     analysis_provider: str = "auto"
     gemini_model: str = "gemini-1.5-flash"
@@ -30,6 +33,15 @@ class Settings(BaseModel):
     error_log_path: str = str(ROOT_DIR / "ERROR_LOG.txt")
     enable_background_polling: bool = False
     alert_poll_seconds: int = 300
+
+    def news_queries(self) -> list[str]:
+        segmented = [
+            self.query_energy,
+            self.query_shipping,
+            self.query_geopolitics,
+        ]
+        queries = [query.strip() for query in segmented if query and query.strip()]
+        return queries or [self.default_news_query]
 
     def resolved_analysis_provider(self) -> str:
         provider = self.analysis_provider.lower()
@@ -62,6 +74,9 @@ def get_settings() -> Settings:
             "DEFAULT_NEWS_QUERY",
             "Middle East geopolitics oil shipping markets",
         ),
+        query_energy=os.getenv("QUERY_ENERGY") or None,
+        query_shipping=os.getenv("QUERY_SHIPPING") or None,
+        query_geopolitics=os.getenv("QUERY_GEOPOLITICS") or None,
         ingest_page_size=int(os.getenv("INGEST_PAGE_SIZE", "10")),
         analysis_provider=os.getenv("ANALYSIS_PROVIDER", "auto"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),

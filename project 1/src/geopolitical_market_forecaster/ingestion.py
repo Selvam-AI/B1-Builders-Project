@@ -164,6 +164,7 @@ class NewsIngestionService:
     async def fetch(self, source: str = "auto") -> tuple[str, list[NewsItem], list[str]]:
         errors: list[str] = []
         sources = self._sources_for(source)
+        queries = self.settings.news_queries()
 
         for candidate in sources:
             try:
@@ -171,10 +172,9 @@ class NewsIngestionService:
                     if not self.settings.guardian_api_key:
                         errors.append("Guardian skipped: GUARDIAN_API_KEY is not set.")
                         continue
-                    items = await GuardianClient(self.settings.guardian_api_key).fetch(
-                        self.settings.default_news_query,
-                        self.settings.default_region,
-                        self.settings.ingest_page_size,
+                    items = await self._fetch_segmented(
+                        GuardianClient(self.settings.guardian_api_key),
+                        queries,
                     )
                     return candidate, items, errors
 
@@ -182,10 +182,9 @@ class NewsIngestionService:
                     if not self.settings.news_api_key:
                         errors.append("NewsAPI skipped: NEWS_API_KEY is not set.")
                         continue
-                    items = await NewsApiClient(self.settings.news_api_key).fetch(
-                        self.settings.default_news_query,
-                        self.settings.default_region,
-                        self.settings.ingest_page_size,
+                    items = await self._fetch_segmented(
+                        NewsApiClient(self.settings.news_api_key),
+                        queries,
                     )
                     return candidate, items, errors
 
@@ -202,6 +201,37 @@ class NewsIngestionService:
                 append_error_log(self.settings.error_log_path, candidate, message)
 
         return "none", [], errors
+
+    async def _fetch_segmented(
+        self,
+        client: GuardianClient | NewsApiClient,
+        queries: list[str],
+    ) -> list[NewsItem]:
+        page_size = self.settings.ingest_page_size
+        base_size, remainder = divmod(page_size, len(queries))
+        collected: list[NewsItem] = []
+
+        for index, query in enumerate(queries):
+            query_size = base_size + (1 if index < remainder else 0)
+            if query_size == 0:
+                continue
+            collected.extend(
+                await client.fetch(
+                    query,
+                    self.settings.default_region,
+                    query_size,
+                )
+            )
+
+        unique_items: list[NewsItem] = []
+        seen_urls: set[str] = set()
+        for item in collected:
+            url = str(item.url)
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            unique_items.append(item)
+        return unique_items[:page_size]
 
     def _sources_for(self, source: str) -> list[str]:
         if source == "auto":

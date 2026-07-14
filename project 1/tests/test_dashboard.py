@@ -44,17 +44,20 @@ async def test_dashboard_api_returns_summary_and_signals(tmp_path, monkeypatch):
 def test_dashboard_template_and_styles_exist():
     package_dir = Path(__file__).resolve().parents[1] / "src" / "geopolitical_market_forecaster"
 
-    assert "Sector Decision Dashboard" in (
+    assert 'role="tablist"' in (
         package_dir / "templates" / "dashboard.html"
     ).read_text()
-    assert "Company Focus" not in (
+    assert "Historical Performance & Learning" not in (
         package_dir / "templates" / "dashboard.html"
     ).read_text()
-    assert "Evidence Links" in (
+    assert "System Governance" not in (
         package_dir / "templates" / "dashboard.html"
     ).read_text()
-    assert ".workflow-steps" in (package_dir / "static" / "dashboard.css").read_text()
-    assert ".decision-word" in (
+    assert "Live Global News Feed" in (
+        package_dir / "templates" / "dashboard.html"
+    ).read_text()
+    assert ".entity-tabs" in (package_dir / "static" / "dashboard.css").read_text()
+    assert ".wind-badge" in (
         package_dir / "static" / "dashboard.css"
     ).read_text()
-    assert ".confidence-track" in (package_dir / "static" / "dashboard.css").read_text()
+    assert ".score-track" in (package_dir / "static" / "dashboard.css").read_text()

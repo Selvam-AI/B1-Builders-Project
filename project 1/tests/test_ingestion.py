@@ -136,3 +136,40 @@ async def test_ingestion_logs_provider_error_and_continues(monkeypatch, tmp_path
     assert items[0].title == "NewsAPI recovery item"
     assert errors == ["guardian failed: HTTP 500 from provider"]
     assert "guardian failed: HTTP 500 from provider" in error_log_path.read_text()
+
+
+@pytest.mark.asyncio
+async def test_segmented_queries_share_page_size_and_deduplicate(monkeypatch):
+    calls = []
+
+    async def guardian_fetch_stub(self, query, region, page_size):
+        from geopolitical_market_forecaster.models import NewsItem
+
+        calls.append((query, page_size))
+        return [
+            NewsItem(
+                title=f"Story for {query}",
+                source="The Guardian",
+                url=f"https://example.com/{len(calls)}",
+            )
+        ]
+
+    monkeypatch.setattr(GuardianClient, "fetch", guardian_fetch_stub)
+    settings = Settings(
+        guardian_api_key="guardian-key",
+        ingest_page_size=10,
+        query_energy="energy query",
+        query_shipping="shipping query",
+        query_geopolitics="geopolitics query",
+    )
+
+    source, items, errors = await NewsIngestionService(settings).fetch("guardian")
+
+    assert source == "guardian"
+    assert errors == []
+    assert calls == [
+        ("energy query", 4),
+        ("shipping query", 3),
+        ("geopolitics query", 3),
+    ]
+    assert len(items) == 3

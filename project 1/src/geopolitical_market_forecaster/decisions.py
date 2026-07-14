@@ -44,6 +44,30 @@ def _offshore_marine_decision(signals: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "category": "Offshore & Marine Exposure",
         "theme": "offshore",
+        "company_name": "Seatrium",
+        "ticker": "5E2.SI",
+        "sector_label": "Offshore & Marine",
+        "wind_direction": "TAILWIND",
+        "wind_summary": (
+            "Global maritime risk patterns and fuel logistics adjustments are "
+            "pointing to stronger demand for offshore and marine services."
+        ),
+        "market_price": "S$1.97",
+        "day_change": "-9.2%",
+        "change_direction": "negative",
+        "logic_score": 74,
+        "logic_label": "High structural pattern fit",
+        "simple_explanation": (
+            "When shipping lanes face disruption or energy markets become volatile, "
+            "demand can increase for specialised offshore engineering and marine "
+            "infrastructure. Seatrium operates in this area, so these wider conditions "
+            "may create a favourable industry environment even when its daily share "
+            "price moves in the opposite direction."
+        ),
+        "disclaimer": (
+            "A tailwind does not account for company debt, quarterly earnings, "
+            "valuation, or other company-specific fundamentals."
+        ),
         "decision": decision,
         "confidence": confidence,
         "confidence_score": confidence_score,
@@ -102,6 +126,30 @@ def _airline_decision(signals: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "category": "Airline Exposure",
         "theme": "airline",
+        "company_name": "Singapore Airlines",
+        "ticker": "C6L.SI",
+        "sector_label": "Aviation",
+        "wind_direction": "HEADWIND",
+        "wind_summary": (
+            "Regional airspace constraints and volatile fuel costs are creating "
+            "operational pressure for airlines."
+        ),
+        "market_price": "S$7.62",
+        "day_change": "+18.1%",
+        "change_direction": "positive",
+        "logic_score": 81,
+        "logic_label": "High structural pattern fit",
+        "simple_explanation": (
+            "Airlines are directly affected by jet-fuel prices and route changes. "
+            "When regional tension pushes energy costs higher or closes airspace, "
+            "aircraft may need to fly longer routes and use more fuel. For Singapore "
+            "Airlines, that creates a challenging industry environment even when its "
+            "daily share price is rising."
+        ),
+        "disclaimer": (
+            "A headwind does not account for passenger demand, company earnings, "
+            "valuation, or other company-specific fundamentals."
+        ),
         "decision": decision,
         "confidence": confidence,
         "confidence_score": confidence_score,
@@ -137,6 +185,8 @@ def _matching_evidence(
                 "title": signal.get("title"),
                 "source": signal.get("source"),
                 "url": signal.get("url"),
+                "published_at": signal.get("published_at"),
+                "topic": _topic_label(text),
                 "signal_tier": signal.get("signal_tier"),
                 "themes": signal.get("themes") or [],
                 "forecast": signal.get("forecast"),
@@ -146,6 +196,16 @@ def _matching_evidence(
             }
         )
     return matches
+
+
+def _topic_label(text: str) -> str:
+    if any(term in text for term in ["shipping", "red sea", "suez", "maritime"]):
+        return "Shipping"
+    if any(term in text for term in ["oil", "fuel", "energy", "opec"]):
+        return "Oil"
+    if any(term in text for term in ["airline", "aviation", "airspace", "flight"]):
+        return "Aviation"
+    return "Geopolitics"
 
 
 def _signal_text(signal: dict[str, Any]) -> str:

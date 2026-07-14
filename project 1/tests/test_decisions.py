@@ -29,6 +29,10 @@ def test_sector_decisions_turn_oil_shipping_risk_into_demo_signals():
     assert "Seatrium" in offshore["candidates"]
     assert offshore["evidence"]
     assert offshore["confidence_score"] == 58
+    assert offshore["wind_direction"] == "TAILWIND"
+    assert offshore["market_price"] == "S$1.97"
+    assert offshore["logic_score"] == 74
+    assert offshore["evidence"][0]["topic"] == "Shipping"
     assert offshore["agent_steps"][0]["agent"] == "Scraper Agent"
     assert offshore["theme"] == "offshore"
 
@@ -37,5 +41,8 @@ def test_sector_decisions_turn_oil_shipping_risk_into_demo_signals():
     assert "Singapore Airlines" in airline["candidates"]
     assert airline["evidence"]
     assert airline["confidence_score"] == 61
+    assert airline["wind_direction"] == "HEADWIND"
+    assert airline["market_price"] == "S$7.62"
+    assert airline["logic_score"] == 81
     assert airline["agent_steps"][-1]["agent"] == "Governor Agent"
     assert airline["theme"] == "airline"
